@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>こども服薬・パニック記録</title>
+  <title>あおはノート</title>
   <style>
     :root {
       --bg: #eaf8ff;
@@ -375,15 +375,69 @@
       font-size: 0.76rem;
       font-weight: 900;
     }
+  
+    .med-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .med-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f3fbff;
+      border: 1px solid #c9edf9;
+      border-radius: 16px;
+      padding: 10px 12px;
+      font-weight: 800;
+      color: #315f78;
+    }
+    .med-item input {
+      width: auto;
+      transform: scale(1.15);
+      accent-color: var(--main);
+    }
+    .med-add-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .med-list-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-bottom: 1px dashed #c9edf9;
+      padding: 8px 0;
+      font-size: .9rem;
+    }
+    .med-list-row:last-child { border-bottom: 0; }
+    .icon-preview {
+      width: 54px;
+      height: 54px;
+      border-radius: 18px;
+      object-fit: cover;
+      border: 2px solid #c9edf9;
+      box-shadow: 0 8px 18px rgba(53,169,214,.18);
+      background: #fff;
+    }
+
   </style>
+
+  <link rel="icon" type="image/png" href="./aoha-icon.png">
+  <link rel="apple-touch-icon" href="./aoha-icon.png">
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#55bfe8">
 </head>
 <body>
   <header>
     <div class="header-inner">
-      <div>
-        <h1>こころとからだの記録</h1>
-        <div class="sub">水色ベースのやさしい記録アプリ・JSON共有対応</div>
-      </div>
+      <div style="display:flex;align-items:center;gap:10px;"><img src="./aoha-icon.png" class="icon-preview" alt="あおはノート"><div>
+        <h1>あおはノート</h1>
+        <div class="sub">服薬・こころ・からだのやさしい記録アプリ</div>
+      </div></div>
       <div class="buttons" style="margin:0;">
         <button class="secondary" onclick="exportJSON()">JSON書き出し</button>
         <button class="gray" onclick="document.getElementById('importFile').click()">JSON読み込み</button>
@@ -429,6 +483,10 @@
               <input id="sleepTime" type="time" />
             </div>
           </div>
+          <label>飲んだ薬</label>
+          <div id="medicineChecklist" class="med-grid"></div>
+          <div class="small">薬が変わった場合は、右側の「薬の登録・変更」から追加できます。</div>
+
 
           <label>夜のパニックの強さ：0〜10</label>
           <div class="scale-wrap">
@@ -502,10 +560,21 @@
           </div>
         </div>
 
+
+        <div class="card">
+          <h2>薬の登録・変更</h2>
+          <p class="small">処方が変わった時は薬名を追加してください。削除しても過去記録の薬名は残ります。</p>
+          <div id="medicineManageList"></div>
+          <div class="med-add-row">
+            <input id="newMedicineName" type="text" placeholder="新しい薬名を入力">
+            <button class="secondary" onclick="addMedicine()">追加</button>
+          </div>
+        </div>
+
         <div class="card">
           <h2>共有方法</h2>
           <p class="small">
-            夫婦どちらかが入力 →「JSON書き出し」→ LINEやメールで送る → もう一方が「JSON読み込み」。
+            夫婦どちらかが入力 →「JSON書き出し」→ LINEやメールで送る → もう一方が「JSON読み込み」。薬リストも一緒に共有されます。
             読み込み時は同じ日付の記録がある場合、後から読み込んだ内容で上書きされます。
           </p>
         </div>
@@ -524,7 +593,95 @@
 
   <script>
     const STORAGE_KEY = "child_med_panic_records_v1";
+    const MEDICINE_KEY = "child_med_panic_medicines_v1";
+    const DEFAULT_MEDICINES = [
+      "アトモキセチン内用液0.4%",
+      "セルトラリン錠25mg",
+      "クロチアゼパム錠5mg",
+      "ツムラ甘麦大棗湯"
+    ];
     let records = [];
+    let medicines = [];
+
+
+    function loadMedicines() {
+      try {
+        medicines = JSON.parse(localStorage.getItem(MEDICINE_KEY) || "null") || DEFAULT_MEDICINES;
+      } catch {
+        medicines = DEFAULT_MEDICINES;
+      }
+      if (!Array.isArray(medicines) || medicines.length === 0) medicines = DEFAULT_MEDICINES;
+      saveMedicines();
+      renderMedicineChecklist();
+      renderMedicineManageList();
+    }
+
+    function saveMedicines() {
+      localStorage.setItem(MEDICINE_KEY, JSON.stringify(medicines));
+    }
+
+    function getCheckedMedicines() {
+      return Array.from(document.querySelectorAll('input[name="medicinesTaken"]:checked')).map(el => el.value);
+    }
+
+    function setCheckedMedicines(values) {
+      const set = new Set(values || []);
+      document.querySelectorAll('input[name="medicinesTaken"]').forEach(el => {
+        el.checked = set.has(el.value);
+      });
+    }
+
+    function renderMedicineChecklist() {
+      const box = document.getElementById("medicineChecklist");
+      if (!box) return;
+      box.innerHTML = "";
+      medicines.forEach(name => {
+        const label = document.createElement("label");
+        label.className = "med-item";
+        label.innerHTML = `<input type="checkbox" name="medicinesTaken" value="${escapeHTML(name)}"><span>${escapeHTML(name)}</span>`;
+        box.appendChild(label);
+      });
+    }
+
+    function renderMedicineManageList() {
+      const box = document.getElementById("medicineManageList");
+      if (!box) return;
+      box.innerHTML = "";
+      medicines.forEach((name, index) => {
+        const row = document.createElement("div");
+        row.className = "med-list-row";
+        row.innerHTML = `
+          <span>${escapeHTML(name)}</span>
+          <button class="danger" onclick="removeMedicine(${index})">削除</button>
+        `;
+        box.appendChild(row);
+      });
+    }
+
+    function addMedicine() {
+      const input = document.getElementById("newMedicineName");
+      const name = input.value.trim();
+      if (!name) {
+        alert("薬名を入力してください");
+        return;
+      }
+      if (!medicines.includes(name)) {
+        medicines.push(name);
+        saveMedicines();
+        renderMedicineChecklist();
+        renderMedicineManageList();
+      }
+      input.value = "";
+    }
+
+    function removeMedicine(index) {
+      const name = medicines[index];
+      if (!confirm(`${name} を現在の薬リストから削除しますか？\n過去の記録に保存済みの薬名は残ります。`)) return;
+      medicines.splice(index, 1);
+      saveMedicines();
+      renderMedicineChecklist();
+      renderMedicineManageList();
+    }
 
     function todayString() {
       const d = new Date();
@@ -564,6 +721,7 @@
         recorder: document.getElementById("recorder").value,
         medicineTime: document.getElementById("medicineTime").value,
         sleepTime: document.getElementById("sleepTime").value,
+        medicinesTaken: getCheckedMedicines(),
         nightPanic: Number(document.getElementById("nightPanic").value),
         morningPanic: Number(document.getElementById("morningPanic").value),
         stomach: getRadio("stomach"),
@@ -596,6 +754,7 @@
       document.getElementById("recorder").value = r.recorder || "";
       document.getElementById("medicineTime").value = r.medicineTime || "";
       document.getElementById("sleepTime").value = r.sleepTime || "";
+      setCheckedMedicines(r.medicinesTaken || []);
       document.getElementById("nightPanic").value = r.nightPanic ?? 0;
       document.getElementById("morningPanic").value = r.morningPanic ?? 0;
       document.getElementById("nightScoreLabel").textContent = r.nightPanic ?? 0;
@@ -628,6 +787,7 @@
       document.getElementById("recorder").value = "";
       document.getElementById("medicineTime").value = "";
       document.getElementById("sleepTime").value = "";
+      setCheckedMedicines([]);
       document.getElementById("nightPanic").value = 0;
       document.getElementById("morningPanic").value = 0;
       document.getElementById("nightScoreLabel").textContent = 0;
@@ -676,6 +836,7 @@
             <div>
               <div class="log-title">${escapeHTML(r.date)} <span class="pill">${escapeHTML(r.recorder || "記録者なし")}</span></div>
               <div class="small">服薬 ${escapeHTML(r.medicineTime || "-")} ／ 就寝 ${escapeHTML(r.sleepTime || "-")}</div>
+              <div class="small">飲んだ薬：${escapeHTML((r.medicinesTaken && r.medicinesTaken.length) ? r.medicinesTaken.join("、") : "-")}</div>
             </div>
             <div class="buttons" style="margin:0;">
               <button class="gray" onclick="editRecord('${r.date}')">編集</button>
@@ -702,6 +863,7 @@
         app: "child_med_panic_records",
         version: 1,
         exportedAt: new Date().toISOString(),
+        medicines,
         records
       };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
@@ -723,6 +885,12 @@
       reader.onload = () => {
         try {
           const data = JSON.parse(reader.result);
+          if (data.medicines && Array.isArray(data.medicines)) {
+            medicines = Array.from(new Set([...medicines, ...data.medicines]));
+            saveMedicines();
+            renderMedicineChecklist();
+            renderMedicineManageList();
+          }
           const imported = Array.isArray(data) ? data : data.records;
           if (!Array.isArray(imported)) throw new Error("records not found");
 
@@ -758,6 +926,7 @@
       records.slice(0, 14).forEach(r => {
         lines.push(`■ ${r.date}`);
         lines.push(`服薬：${r.medicineTime || "-"} ／ 就寝：${r.sleepTime || "-"}`);
+        lines.push(`飲んだ薬：${(r.medicinesTaken && r.medicinesTaken.length) ? r.medicinesTaken.join("、") : "-"}`);
         lines.push(`夜のパニック：${r.nightPanic}/10 ／ 朝のパニック：${r.morningPanic}/10`);
         lines.push(`腹痛・吐き気：${r.stomach} ／ 眠気・ふらつき：${r.sleepy}`);
         lines.push(`崩れ方：${r.meltdownChange} ／ 妹への攻撃性：${r.sisterAggression}`);
@@ -783,6 +952,7 @@
     }
 
     document.getElementById("date").value = todayString();
+    loadMedicines();
     loadRecords();
   </script>
 </body>
