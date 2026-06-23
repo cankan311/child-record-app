@@ -358,8 +358,8 @@ body {
   <img class="hdr-icon" src="aoha-icon.png" alt="" id="appIcon"
        onerror="this.style.display='none'; document.getElementById('iconFallback').style.display='flex'">
   <span class="hdr-icon-fallback" id="iconFallback" style="display:none">🌿</span>
-  <h1>あおはノート <small>服薬・パニック記録</small></h1>
-  <span class="sync-badge" id="syncBadge">読込中…</span>
+  <h1>あおはノート <small>服薬・パニック記録 / 自動同期停止版</small></h1>
+  <span class="sync-badge" id="syncBadge">自動同期なし</span>
 </header>
 
 <!-- タブ -->
@@ -550,7 +550,6 @@ body {
 
 const GAS_URL  = 'https://script.google.com/macros/s/AKfycbx7xdkswy-VMtJWZX1lHdeKMRSNC9Ic9_QeKxCXgMdzUvnoxhUxZFRFyB16w1e3tDKeSg/exec';
 const DRAFT_KEY = 'aoha_note_form_draft';
-const SYNC_MS   = 20000; // 自動同期間隔(20秒)
 
 // ===== dirty flag =====
 let formDirty   = false;  // フォームに変更があるか
@@ -600,11 +599,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // 下書きを復元 (非同期で確認)
   restoreDraft();
 
-  // リモートデータ取得
-  fetchRemoteData();
-
-  // 自動同期開始
-  setInterval(autoSync, SYNC_MS);
+  // 自動同期・起動時自動読み込みは停止。
+  // 入力中に通信結果でフォームや薬欄が巻き戻るのを防ぐ。
+  setBadge('自動同期なし');
 });
 
 function onFormChange() {
@@ -626,23 +623,19 @@ function showTab(name, btn) {
    データ取得（初回・保存後）
    ============================================================ */
 async function fetchRemoteData() {
+  // 保存・削除後に一覧だけ更新する関数。
+  // 薬リストや入力フォームは絶対に触らない。
   try {
-    const res  = await fetch(GAS_URL + '?action=list');
+    const res  = await fetch(GAS_URL + '?action=list&ts=' + Date.now(), {cache: 'no-store'});
     const data = await res.json();
     if (data.ok) {
-      remoteRecords = data.records  || [];
-      const serverMeds = data.medicines || [];
-      if (serverMeds.length > 0) {
-        medicines = serverMeds;
-        renderMedCheckArea(); // 薬リストが変わった場合だけ再描画
-        renderMedMgrArea();
-      }
+      remoteRecords = data.records || [];
     }
-    setBadge('同期済 ' + nowHHmm());
+    setBadge('保存後更新 ' + nowHHmm());
     renderListOnly();
     renderSummaryOnly();
   } catch (e) {
-    setBadge('同期失敗');
+    setBadge('更新失敗');
     console.warn('fetchRemoteData error:', e);
   }
 }
@@ -652,20 +645,10 @@ async function fetchRemoteData() {
    ★ フォームは絶対に触らない
    ★ renderListOnly / renderSummaryOnly だけ
    ============================================================ */
-async function autoSync() {
-  try {
-    const res  = await fetch(GAS_URL + '?action=list');
-    const data = await res.json();
-    if (data.ok) {
-      remoteRecords = data.records  || [];
-      // 薬リストは自動同期で更新しない（入力中かもしれない）
-    }
-    setBadge('同期済 ' + nowHHmm());
-    renderListOnly();      // ← フォームに触らない
-    renderSummaryOnly();   // ← フォームに触らない
-  } catch (e) {
-    setBadge('同期失敗');
-  }
+function autoSync() {
+  // 自動同期は完全停止。
+  // 何かの古い呼び出しが残っていても、ここでは何もしない。
+  return;
 }
 
 /* ============================================================
@@ -865,7 +848,7 @@ async function saveRecord() {
   try {
     const res = await fetch(GAS_URL, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
       body:    JSON.stringify({action: 'upsertRecord', record: rec})
     });
     const data = await res.json();
@@ -894,7 +877,7 @@ async function deleteRecord(date) {
   try {
     const res  = await fetch(GAS_URL, {
       method: 'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:   JSON.stringify({action:'deleteRecord', date})
     });
     const data = await res.json();
@@ -915,7 +898,7 @@ async function deleteAllRecords() {
   try {
     const res  = await fetch(GAS_URL, {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'deleteAllRecords'})
     });
     const data = await res.json();
@@ -1046,7 +1029,7 @@ async function saveMedicineList() {
   try {
     const res  = await fetch(GAS_URL, {
       method: 'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:   JSON.stringify({action:'saveMedicines', medicines})
     });
     const data = await res.json();
