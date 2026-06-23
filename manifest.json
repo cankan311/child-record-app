@@ -1,18 +1,19 @@
 {
   "name": "あおはノート",
   "short_name": "あおはノート",
-  "start_url": "./",
+  "description": "あおはの服薬・パニック・体調記録アプリ",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#eaf8ff",
-  "theme_color": "#55bfe8",
+  "background_color": "#f0f9fc",
+  "theme_color": "#5ab5d3",
   "icons": [
     {
-      "src": "./aoha-icon.png",
+      "src": "aoha-icon.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "./aoha-icon.png",
+      "src": "aoha-icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
