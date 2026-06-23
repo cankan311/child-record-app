@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>あおはノート</title>
+  <!-- aoha-note-no-json-buttons-v4 -->
   <style>
     :root {
       --bg: #eaf8ff;
@@ -448,6 +449,12 @@
       border-color: #ffd0da;
     }
 
+  
+    button[onclick="exportJSON()"],
+    button[onclick="document.getElementById('importFile').click()"] {
+      display: none !important;
+    }
+
   </style>
 
   <link rel="icon" type="image/png" href="./aoha-icon.png">
@@ -471,8 +478,7 @@
     <div class="notice">
       このアプリは家庭内の記録用です。薬の増減・中止・飲み方の変更は、必ず処方医または薬剤師に確認してください。
     </div>
-
-    <div class="grid" style="margin-top:16px;">
+<div class="grid" style="margin-top:16px;">
       <section>
         <div class="card">
           <h2>今日の記録</h2>
