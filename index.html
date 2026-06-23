@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>あおはノート</title>
-  <!-- aoha-note-no-json-buttons-v4 -->
+  <!-- aoha-note-v6-rough-time-slots -->
+  <!-- aoha-note-v6-rough-time-slots -->
+  <!-- aoha-note-v6-rough-time-slots -->
   <style>
     :root {
       --bg: #eaf8ff;
@@ -455,6 +457,27 @@
       display: none !important;
     }
 
+    .med-line {
+      display: grid;
+      grid-template-columns: auto 1fr 118px 118px;
+      gap: 8px;
+      align-items: center;
+      width: 100%;
+    }
+    .med-line select {
+      padding: 8px 9px;
+      border-radius: 12px;
+      font-size: .9rem;
+    }
+    @media (max-width: 640px) {
+      .med-line {
+        grid-template-columns: auto 1fr;
+      }
+      .med-line select {
+        grid-column: 2 / 3;
+      }
+    }
+
   </style>
 
   <link rel="icon" type="image/png" href="./aoha-icon.png">
@@ -469,8 +492,7 @@
         <h1>あおはノート</h1>
         <div class="sub">服薬・こころ・からだのやさしい記録アプリ</div>
       </div></div>
-      <div class="buttons" style="margin:0;"><span id="syncStatus" class="sync-status warn">自動同期準備中</span>
-      </div>
+      <div class="buttons" style="margin:0;"><span id="syncStatus" class="sync-status warn">自動同期準備中</span></div>
     </div>
   </header>
 
@@ -501,17 +523,32 @@
 
           <div class="row">
             <div>
-              <label for="medicineTime">何時に飲んだか</label>
-              <input id="medicineTime" type="time" />
+              <label for="medicineTime">薬を飲んだ主な時間帯</label>
+              <select id="medicineTime">
+                <option value="">選択なし</option>
+                <option value="朝">朝</option>
+                <option value="昼">昼</option>
+                <option value="夕方">夕方</option>
+                <option value="晩">晩</option>
+                <option value="就寝前">就寝前</option>
+                <option value="その他">その他</option>
+              </select>
             </div>
             <div>
-              <label for="sleepTime">何時に寝たか</label>
-              <input id="sleepTime" type="time" />
+              <label for="sleepTime">寝た時間帯</label>
+              <select id="sleepTime">
+                <option value="">選択なし</option>
+                <option value="夕方">夕方</option>
+                <option value="晩">晩</option>
+                <option value="就寝前">就寝前</option>
+                <option value="深夜">深夜</option>
+                <option value="その他">その他</option>
+              </select>
             </div>
           </div>
           <label>飲んだ薬</label>
           <div id="medicineChecklist" class="med-grid"></div>
-          <div class="small">薬が変わった場合は、右側の「薬の登録・変更」から追加できます。</div>
+          <div class="small">薬ごとに「朝・夕方・晩・就寝前」と「食前・食後」などをアバウトに残せます。</div>
 
 
           <label>夜のパニックの強さ：0〜10</label>
@@ -524,6 +561,19 @@
           <div class="scale-wrap">
             <div class="scale-head"><span>0=なし</span><span class="score" id="morningScoreLabel">0</span><span>10=最大</span></div>
             <input id="morningPanic" type="range" min="0" max="10" value="0" oninput="morningScoreLabel.textContent=this.value" />
+          </div>
+
+
+          <label>癇癪・パニックが起きた時間帯</label>
+          <div class="seg">
+            <label><input type="radio" name="panicTimeSlot" value="朝"><span>朝</span></label>
+            <label><input type="radio" name="panicTimeSlot" value="昼"><span>昼</span></label>
+            <label><input type="radio" name="panicTimeSlot" value="夕方"><span>夕方</span></label>
+          </div>
+          <div class="seg" style="margin-top:8px;">
+            <label><input type="radio" name="panicTimeSlot" value="晩"><span>晩</span></label>
+            <label><input type="radio" name="panicTimeSlot" value="就寝前"><span>就寝前</span></label>
+            <label><input type="radio" name="panicTimeSlot" value="なし" checked><span>なし</span></label>
           </div>
 
           <label>腹痛・吐き気</label>
@@ -556,6 +606,13 @@
 
           <label for="unusual">いつもと違う様子</label>
           <textarea id="unusual" placeholder="例：いつもより眠そう／逆に興奮していた／食欲がない／朝まで薬が残っている感じ など"></textarea>
+
+
+          <label for="childReason">本人に聞いた癇癪・不安の理由</label>
+          <textarea id="childReason" placeholder="例：明日学校が不安だった／ドライブの帰り道で現実に戻るのが嫌だった、など"></textarea>
+
+          <label for="parentReason">親が予想した原因・きっかけ</label>
+          <textarea id="parentReason" placeholder="例：薬の影響か、疲れか、眠気か、妹への嫉妬か、予定変更への不安か、など"></textarea>
 
           <label for="memo">メモ</label>
           <textarea id="memo" placeholder="登校できたかではなく、パニックの時間・強さ・回復までの時間・帰宅後の崩れ方など"></textarea>
@@ -751,11 +808,47 @@
       return Array.from(document.querySelectorAll('input[name="medicinesTaken"]:checked')).map(el => el.value);
     }
 
-    function setCheckedMedicines(values) {
+    function getMedicineTimes() {
+      const timings = {};
+      medicines.forEach(name => {
+        const slot = document.querySelector(`select[data-medicine-slot="${cssEscape(name)}"]`)?.value || "";
+        const meal = document.querySelector(`select[data-medicine-meal="${cssEscape(name)}"]`)?.value || "";
+        if (slot || meal) timings[name] = { slot, meal };
+      });
+      return timings;
+    }
+
+    function cssEscape(value) {
+      if (window.CSS && CSS.escape) return CSS.escape(value);
+      return String(value).replaceAll('"', '\\"');
+    }
+
+    function setCheckedMedicines(values, times = {}) {
       const set = new Set(values || []);
       document.querySelectorAll('input[name="medicinesTaken"]').forEach(el => {
         el.checked = set.has(el.value);
       });
+      medicines.forEach(name => {
+        const info = times && times[name] ? times[name] : {};
+        const slotEl = document.querySelector(`select[data-medicine-slot="${cssEscape(name)}"]`);
+        const mealEl = document.querySelector(`select[data-medicine-meal="${cssEscape(name)}"]`);
+        if (slotEl) slotEl.value = typeof info === "object" ? (info.slot || "") : "";
+        if (mealEl) mealEl.value = typeof info === "object" ? (info.meal || "") : "";
+      });
+    }
+
+    function formatMedicinesWithTimes(record) {
+      const meds = record.medicinesTaken || [];
+      const times = record.medicineTimes || {};
+      if (!meds.length) return "-";
+      return meds.map(name => {
+        const info = times[name];
+        if (info && typeof info === "object") {
+          const bits = [info.slot, info.meal].filter(Boolean).join("・");
+          return bits ? `${name}（${bits}）` : name;
+        }
+        return name;
+      }).join("、");
     }
 
     function renderMedicineChecklist() {
@@ -765,7 +858,29 @@
       medicines.forEach(name => {
         const label = document.createElement("label");
         label.className = "med-item";
-        label.innerHTML = `<input type="checkbox" name="medicinesTaken" value="${escapeHTML(name)}"><span>${escapeHTML(name)}</span>`;
+        label.innerHTML = `
+          <span class="med-line">
+            <input type="checkbox" name="medicinesTaken" value="${escapeHTML(name)}">
+            <span>${escapeHTML(name)}</span>
+            <select data-medicine-slot="${escapeHTML(name)}" aria-label="${escapeHTML(name)}の時間帯">
+              <option value="">時間帯</option>
+              <option value="朝">朝</option>
+              <option value="昼">昼</option>
+              <option value="夕方">夕方</option>
+              <option value="晩">晩</option>
+              <option value="就寝前">就寝前</option>
+              <option value="その他">その他</option>
+            </select>
+            <select data-medicine-meal="${escapeHTML(name)}" aria-label="${escapeHTML(name)}の食前食後">
+              <option value="">食前/食後</option>
+              <option value="食前">食前</option>
+              <option value="食後">食後</option>
+              <option value="食間">食間</option>
+              <option value="頓服">頓服</option>
+              <option value="その他">その他</option>
+            </select>
+          </span>
+        `;
         box.appendChild(label);
       });
     }
@@ -851,13 +966,17 @@
         medicineTime: document.getElementById("medicineTime").value,
         sleepTime: document.getElementById("sleepTime").value,
         medicinesTaken: getCheckedMedicines(),
+        medicineTimes: getMedicineTimes(),
         nightPanic: Number(document.getElementById("nightPanic").value),
         morningPanic: Number(document.getElementById("morningPanic").value),
+        panicTimeSlot: getRadio("panicTimeSlot"),
         stomach: getRadio("stomach"),
         sleepy: getRadio("sleepy"),
         meltdownChange: getRadio("meltdownChange"),
         sisterAggression: getRadio("sisterAggression"),
         unusual: document.getElementById("unusual").value.trim(),
+        childReason: document.getElementById("childReason").value.trim(),
+        parentReason: document.getElementById("parentReason").value.trim(),
         memo: document.getElementById("memo").value.trim(),
         updatedAt: new Date().toISOString()
       };
@@ -882,18 +1001,21 @@
 
       document.getElementById("date").value = r.date;
       document.getElementById("recorder").value = r.recorder || "";
-      document.getElementById("medicineTime").value = r.medicineTime || "";
-      document.getElementById("sleepTime").value = r.sleepTime || "";
-      setCheckedMedicines(r.medicinesTaken || []);
+      document.getElementById("medicineTime").value = normalizeTime(r.medicineTime || "");
+      document.getElementById("sleepTime").value = normalizeTime(r.sleepTime || "");
+      setCheckedMedicines(r.medicinesTaken || [], r.medicineTimes || {});
       document.getElementById("nightPanic").value = r.nightPanic ?? 0;
       document.getElementById("morningPanic").value = r.morningPanic ?? 0;
       document.getElementById("nightScoreLabel").textContent = r.nightPanic ?? 0;
       document.getElementById("morningScoreLabel").textContent = r.morningPanic ?? 0;
+      setRadio("panicTimeSlot", r.panicTimeSlot || "なし");
       setRadio("stomach", r.stomach || "なし");
       setRadio("sleepy", r.sleepy || "なし");
       setRadio("meltdownChange", r.meltdownChange || "変わらない");
       setRadio("sisterAggression", r.sisterAggression || "変わらない");
       document.getElementById("unusual").value = r.unusual || "";
+      document.getElementById("childReason").value = r.childReason || "";
+      document.getElementById("parentReason").value = r.parentReason || "";
       document.getElementById("memo").value = r.memo || "";
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -919,17 +1041,30 @@
       document.getElementById("recorder").value = "";
       document.getElementById("medicineTime").value = "";
       document.getElementById("sleepTime").value = "";
-      setCheckedMedicines([]);
+      setCheckedMedicines([], {});
       document.getElementById("nightPanic").value = 0;
       document.getElementById("morningPanic").value = 0;
       document.getElementById("nightScoreLabel").textContent = 0;
       document.getElementById("morningScoreLabel").textContent = 0;
+      setRadio("panicTimeSlot", "なし");
       setRadio("stomach", "なし");
       setRadio("sleepy", "なし");
       setRadio("meltdownChange", "変わらない");
       setRadio("sisterAggression", "変わらない");
       document.getElementById("unusual").value = "";
+      document.getElementById("childReason").value = "";
+      document.getElementById("parentReason").value = "";
       document.getElementById("memo").value = "";
+    }
+
+
+    function normalizeTime(value) {
+      if (!value) return "";
+      const str = String(value);
+      const match = str.match(/T(\d{2}:\d{2})/);
+      if (match) return match[1];
+      if (/^\d{2}:\d{2}/.test(str)) return str.slice(0,5);
+      return str;
     }
 
     function tagClass(value) {
@@ -967,23 +1102,25 @@
           <div class="log-head">
             <div>
               <div class="log-title">${escapeHTML(r.date)} <span class="pill">${escapeHTML(r.recorder || "記録者なし")}</span></div>
-              <div class="small">服薬 ${escapeHTML(r.medicineTime || "-")} ／ 就寝 ${escapeHTML(r.sleepTime || "-")}</div>
-              <div class="small">飲んだ薬：${escapeHTML((r.medicinesTaken && r.medicinesTaken.length) ? r.medicinesTaken.join("、") : "-")}</div>
+              <div class="small">主な服薬時間帯 ${escapeHTML(r.medicineTime || "-")} ／ 寝た時間帯 ${escapeHTML(r.sleepTime || "-")}</div>
+              <div class="small">飲んだ薬：${escapeHTML(formatMedicinesWithTimes(r))}</div>
             </div>
-            <div class="buttons" style="margin:0;"><span id="syncStatus" class="sync-status warn">自動同期準備中</span>
-              <button class="gray" onclick="editRecord('${r.date}')">編集</button>
+            <div class="buttons" style="margin:0;"><button class="gray" onclick="editRecord('${r.date}')">編集</button>
               <button class="danger" onclick="deleteRecord('${r.date}')">削除</button>
             </div>
           </div>
           <div class="tags">
             <span class="tag red">夜 ${r.nightPanic}/10</span>
             <span class="tag red">朝 ${r.morningPanic}/10</span>
+            <span class="tag blue">時間帯：${escapeHTML(r.panicTimeSlot || "-")}</span>
             <span class="tag ${tagClass(r.stomach)}">腹痛吐き気：${escapeHTML(r.stomach)}</span>
             <span class="tag ${tagClass(r.sleepy)}">眠気ふらつき：${escapeHTML(r.sleepy)}</span>
             <span class="tag ${tagClass(r.meltdownChange)}">崩れ方：${escapeHTML(r.meltdownChange)}</span>
             <span class="tag ${tagClass(r.sisterAggression)}">妹への攻撃性：${escapeHTML(r.sisterAggression)}</span>
           </div>
           ${r.unusual ? `<p><strong>いつもと違う様子：</strong>${escapeHTML(r.unusual)}</p>` : ""}
+          ${r.childReason ? `<p><strong>本人に聞いた理由：</strong>${escapeHTML(r.childReason)}</p>` : ""}
+          ${r.parentReason ? `<p><strong>親が予想した原因：</strong>${escapeHTML(r.parentReason)}</p>` : ""}
           ${r.memo ? `<p><strong>メモ：</strong>${escapeHTML(r.memo)}</p>` : ""}
         `;
         list.appendChild(div);
@@ -1058,12 +1195,14 @@
 
       records.slice(0, 14).forEach(r => {
         lines.push(`■ ${r.date}`);
-        lines.push(`服薬：${r.medicineTime || "-"} ／ 就寝：${r.sleepTime || "-"}`);
-        lines.push(`飲んだ薬：${(r.medicinesTaken && r.medicinesTaken.length) ? r.medicinesTaken.join("、") : "-"}`);
-        lines.push(`夜のパニック：${r.nightPanic}/10 ／ 朝のパニック：${r.morningPanic}/10`);
+        lines.push(`主な服薬時間帯：${r.medicineTime || "-"} ／ 寝た時間帯：${r.sleepTime || "-"}`);
+        lines.push(`飲んだ薬：${formatMedicinesWithTimes(r)}`);
+        lines.push(`夜のパニック：${r.nightPanic}/10 ／ 朝のパニック：${r.morningPanic}/10 ／ 時間帯：${r.panicTimeSlot || "-"}`);
         lines.push(`腹痛・吐き気：${r.stomach} ／ 眠気・ふらつき：${r.sleepy}`);
         lines.push(`崩れ方：${r.meltdownChange} ／ 妹への攻撃性：${r.sisterAggression}`);
         if (r.unusual) lines.push(`いつもと違う様子：${r.unusual}`);
+        if (r.childReason) lines.push(`本人に聞いた理由：${r.childReason}`);
+        if (r.parentReason) lines.push(`親が予想した原因：${r.parentReason}`);
         if (r.memo) lines.push(`メモ：${r.memo}`);
         lines.push("");
       });
