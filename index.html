@@ -463,8 +463,6 @@
         <div class="sub">服薬・こころ・からだのやさしい記録アプリ</div>
       </div></div>
       <div class="buttons" style="margin:0;"><span id="syncStatus" class="sync-status warn">自動同期準備中</span>
-        <button class="secondary" onclick="exportJSON()">JSON書き出し</button>
-        <button class="gray" onclick="document.getElementById('importFile').click()">JSON読み込み</button>
       </div>
     </div>
   </header>
@@ -473,8 +471,6 @@
     <div class="notice">
       このアプリは家庭内の記録用です。薬の増減・中止・飲み方の変更は、必ず処方医または薬剤師に確認してください。
     </div>
-
-    <input id="importFile" class="hidden" type="file" accept="application/json,.json" onchange="importJSON(event)" />
 
     <div class="grid" style="margin-top:16px;">
       <section>
@@ -596,10 +592,9 @@
         </div>
 
         <div class="card">
-          <h2>共有方法</h2>
+          <h2>自動同期について</h2>
           <p class="small">
-            夫婦どちらかが入力 →「JSON書き出し」→ LINEやメールで送る → もう一方が「JSON読み込み」。薬リストも一緒に共有されます。
-            読み込み時は同じ日付の記録がある場合、後から読み込んだ内容で上書きされます。
+            夫婦どちらかが入力して保存すると、Googleスプレッドシートに自動保存されます。もう一方のスマホでも、同じURLを開いていれば数秒〜十数秒ごとに自動反映されます。
           </p>
         </div>
       </aside>
