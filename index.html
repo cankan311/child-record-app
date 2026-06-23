@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>あおはノート</title>
-  <!-- aoha-note-v9-stable-form-safe-sync -->
+  <!-- aoha-note-v11-form-never-touched-by-sync -->
   <link rel="icon" type="image/png" href="./aoha-icon.png">
   <link rel="apple-touch-icon" href="./aoha-icon.png">
   <link rel="manifest" href="./manifest.json">
@@ -56,7 +56,7 @@
       <img src="./aoha-icon.png" alt="あおはノート">
       <div><h1>あおはノート</h1><div class="sub">服薬・こころ・からだのやさしい記録アプリ</div></div>
     </div>
-    <span id="syncStatus" class="sync-status warn">自動同期準備中</span>
+    <span id="syncStatus" class="sync-status warn">読み込み前</span>
   </div>
 </header>
 
@@ -140,8 +140,8 @@
       </div>
 
       <div class="card">
-        <h2>☁️ 自動同期</h2>
-        <p class="small">入力中のフォームは自動同期で上書きしません。保存・削除した時だけスプレッドシートに反映します。</p>
+        <h2>☁️ 同期について</h2>
+        <p class="small">入力中の自動読み込みはしません。アプリを開いた時に読み込み、保存・削除した時だけスプレッドシートに反映します。入力中のフォームは、読み込み処理では一切触りません。</p>
       </div>
     </aside>
   </div>
@@ -158,7 +158,6 @@ const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx7xdkswy-VMtJWZX1l
 const RECORDS_KEY = "aoha_note_records_v9";
 const MEDICINES_KEY = "aoha_note_medicines_v9";
 const DRAFT_KEY = "aoha_note_form_draft_v9";
-const AUTO_FETCH_MS = 10000;
 const DEFAULT_MEDICINES = ["アトモキセチン内用液0.4%","セルトラリン錠25mg","クロチアゼパム錠5mg","ツムラ甘麦大棗湯"];
 
 let records = [];
@@ -419,7 +418,7 @@ async function postAction(payload){
 async function fetchRemoteData(){
   if(isSaving)return;
   try{
-    setSyncStatus(formDirty?"入力中・一覧のみ更新":"読み込み中...","warn");
+    setSyncStatus("読み込み中...","warn");
     const res=await fetch(GAS_API_URL+"?action=list&ts="+Date.now(),{method:"GET",cache:"no-store"});
     const data=await res.json();
     if(!data.ok)throw new Error(data.error||"remote error");
@@ -427,15 +426,19 @@ async function fetchRemoteData(){
       medicines=data.medicines;
       localStorage.setItem(MEDICINES_KEY,JSON.stringify(medicines));
       renderMedicineManageList();
-      renderMedicineChecklist();
-      attachFormListeners();
+      // 読み込み処理では入力フォームを絶対に再描画しない。
+      // ここで renderMedicineChecklist() を呼ぶと、入力中のチェック・時間帯・食前食後が消える。
+      if(!formDirty){
+        renderMedicineChecklist();
+        attachFormListeners();
+      }
     }
     if(Array.isArray(data.records)){
       records=data.records.map(normalizeRecord).filter(r=>r&&r.date).sort((a,b)=>b.date.localeCompare(a.date));
       localStorage.setItem(RECORDS_KEY,JSON.stringify(records));
       renderListAndSummary();
     }
-    setSyncStatus(formDirty?"入力中・フォーム保護中":"自動同期中");
+    setSyncStatus("読み込み完了");
   }catch(err){
     console.error(err);
     setSyncStatus("同期エラー","err");
@@ -530,8 +533,7 @@ function startApp(){
   resetForm();
   restoreDraftIfAny();
   attachFormListeners();
-  fetchRemoteData();
-  setInterval(fetchRemoteData,AUTO_FETCH_MS);
+  fetchRemoteData(); // 起動時の1回だけ。入力開始後に返ってきてもフォームは触らない。
 }
 startApp();
 </script>
