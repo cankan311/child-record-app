@@ -358,8 +358,8 @@ body {
   <img class="hdr-icon" src="aoha-icon.png" alt="" id="appIcon"
        onerror="this.style.display='none'; document.getElementById('iconFallback').style.display='flex'">
   <span class="hdr-icon-fallback" id="iconFallback" style="display:none">🌿</span>
-  <h1>あおはノート <small>服薬・パニック記録 / 自動同期停止・表示修正版</small></h1>
-  <span class="sync-badge" id="syncBadge">自動同期なし</span>
+  <h1>あおはノート <small>服薬・パニック記録</small></h1>
+  <span class="sync-badge" id="syncBadge">読込中…</span>
 </header>
 
 <!-- タブ -->
@@ -500,14 +500,14 @@ body {
 
 <!-- ===== 一覧 ===== -->
 <div class="tab-pane" id="pane-list">
-  <div id="listArea"><div class="empty"><span class="e-icon">📭</span>まだこの端末では一覧を読み込んでいません<br>保存後に一覧が更新されます</div></div>
+  <div id="listArea"><div class="empty"><span class="e-icon">📭</span>読み込み中…</div></div>
 </div>
 
 <!-- ===== 概要 ===== -->
 <div class="tab-pane" id="pane-summary">
   <div class="card">
     <div class="card-ttl">📊 直近7件の概要</div>
-    <div id="summaryArea"><div class="empty"><span class="e-icon">📊</span>まだこの端末では概要を読み込んでいません<br>保存後に概要が更新されます</div></div>
+    <div id="summaryArea"><div class="empty"><span class="e-icon">📊</span>読み込み中…</div></div>
   </div>
 </div>
 
@@ -550,6 +550,7 @@ body {
 
 const GAS_URL  = 'https://script.google.com/macros/s/AKfycbx7xdkswy-VMtJWZX1lHdeKMRSNC9Ic9_QeKxCXgMdzUvnoxhUxZFRFyB16w1e3tDKeSg/exec';
 const DRAFT_KEY = 'aoha_note_form_draft';
+const SYNC_MS   = 20000; // 自動同期間隔(20秒)
 
 // ===== dirty flag =====
 let formDirty   = false;  // フォームに変更があるか
@@ -599,11 +600,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // 下書きを復元 (非同期で確認)
   restoreDraft();
 
-  // 自動同期・起動時自動読み込みは停止。
-  // 入力中に通信結果でフォームや薬欄が巻き戻るのを防ぐ。
-  setBadge('自動同期なし');
-  renderListOnly();
-  renderSummaryOnly();
+  // リモートデータ取得
+  fetchRemoteData();
+
+  // 自動同期開始
+  setInterval(autoSync, SYNC_MS);
 });
 
 function onFormChange() {
@@ -625,19 +626,23 @@ function showTab(name, btn) {
    データ取得（初回・保存後）
    ============================================================ */
 async function fetchRemoteData() {
-  // 保存・削除後に一覧だけ更新する関数。
-  // 薬リストや入力フォームは絶対に触らない。
   try {
-    const res  = await fetch(GAS_URL + '?action=list&ts=' + Date.now(), {cache: 'no-store'});
+    const res  = await fetch(GAS_URL + '?action=list');
     const data = await res.json();
     if (data.ok) {
-      remoteRecords = data.records || [];
+      remoteRecords = data.records  || [];
+      const serverMeds = data.medicines || [];
+      if (serverMeds.length > 0) {
+        medicines = serverMeds;
+        renderMedCheckArea(); // 薬リストが変わった場合だけ再描画
+        renderMedMgrArea();
+      }
     }
-    setBadge('保存後更新 ' + nowHHmm());
+    setBadge('同期済 ' + nowHHmm());
     renderListOnly();
     renderSummaryOnly();
   } catch (e) {
-    setBadge('更新失敗');
+    setBadge('同期失敗');
     console.warn('fetchRemoteData error:', e);
   }
 }
@@ -647,10 +652,20 @@ async function fetchRemoteData() {
    ★ フォームは絶対に触らない
    ★ renderListOnly / renderSummaryOnly だけ
    ============================================================ */
-function autoSync() {
-  // 自動同期は完全停止。
-  // 何かの古い呼び出しが残っていても、ここでは何もしない。
-  return;
+async function autoSync() {
+  try {
+    const res  = await fetch(GAS_URL + '?action=list');
+    const data = await res.json();
+    if (data.ok) {
+      remoteRecords = data.records  || [];
+      // 薬リストは自動同期で更新しない（入力中かもしれない）
+    }
+    setBadge('同期済 ' + nowHHmm());
+    renderListOnly();      // ← フォームに触らない
+    renderSummaryOnly();   // ← フォームに触らない
+  } catch (e) {
+    setBadge('同期失敗');
+  }
 }
 
 /* ============================================================
@@ -934,7 +949,7 @@ function editRecord(date) {
 function renderListOnly() {
   const area = document.getElementById('listArea');
   if (remoteRecords.length === 0) {
-    area.innerHTML = '<div class="empty"><span class="e-icon">📭</span>まだ記録がありません<br>保存するとここに表示されます</div>';
+    area.innerHTML = '<div class="empty"><span class="e-icon">📭</span>まだ記録がありません</div>';
     return;
   }
   const sorted = [...remoteRecords].sort((a,b) => String(b.date).localeCompare(String(a.date)));
@@ -984,7 +999,7 @@ function renderSummaryOnly() {
     .sort((a,b) => String(b.date).localeCompare(String(a.date)))
     .slice(0, 7);
   if (recent.length === 0) {
-    area.innerHTML = '<div class="empty"><span class="e-icon">📊</span>記録がありません<br>保存すると概要が表示されます</div>';
+    area.innerHTML = '<div class="empty"><span class="e-icon">📊</span>記録がありません</div>';
     return;
   }
   area.innerHTML = `<div class="summ-grid">${recent.map(r => `
