@@ -424,6 +424,30 @@
       background: #fff;
     }
 
+  
+    .sync-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: .78rem;
+      font-weight: 900;
+      background: #e9fff5;
+      color: #087a54;
+      border: 1px solid #c9f4df;
+    }
+    .sync-status.warn {
+      background: #fff8e6;
+      color: #9a6a00;
+      border-color: #ffe1a6;
+    }
+    .sync-status.err {
+      background: #fff0f3;
+      color: #b4234a;
+      border-color: #ffd0da;
+    }
+
   </style>
 
   <link rel="icon" type="image/png" href="./aoha-icon.png">
@@ -438,7 +462,7 @@
         <h1>あおはノート</h1>
         <div class="sub">服薬・こころ・からだのやさしい記録アプリ</div>
       </div></div>
-      <div class="buttons" style="margin:0;">
+      <div class="buttons" style="margin:0;"><span id="syncStatus" class="sync-status warn">自動同期準備中</span>
         <button class="secondary" onclick="exportJSON()">JSON書き出し</button>
         <button class="gray" onclick="document.getElementById('importFile').click()">JSON読み込み</button>
       </div>
@@ -592,6 +616,11 @@
   </main>
 
   <script>
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx7xdkswy-VMtJWZX1lHdeKMRSNC9Ic9_QeKxCXgMdzUvnoxhUxZFRFyB16w1e3tDKeSg/exec";
+    const AUTO_SYNC_MS = 10000;
+    let isRemoteApplying = false;
+    let isSavingRemote = false;
+    let lastRemoteSignature = "";
     const STORAGE_KEY = "child_med_panic_records_v1";
     const MEDICINE_KEY = "child_med_panic_medicines_v1";
     const DEFAULT_MEDICINES = [
@@ -603,6 +632,103 @@
     let records = [];
     let medicines = [];
 
+
+
+    function setSyncStatus(text, type) {
+      const el = document.getElementById("syncStatus");
+      if (!el) return;
+      el.textContent = text;
+      el.classList.remove("warn", "err");
+      if (type === "warn") el.classList.add("warn");
+      if (type === "err") el.classList.add("err");
+    }
+
+    function makeSignature() {
+      return JSON.stringify({ records, medicines });
+    }
+
+    async function fetchRemoteData(silent = false) {
+      if (!GAS_API_URL) return;
+      try {
+        if (!silent) setSyncStatus("同期中...", "warn");
+        const res = await fetch(GAS_API_URL + "?action=list&ts=" + Date.now(), {
+          method: "GET",
+          cache: "no-store"
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "remote error");
+
+        isRemoteApplying = true;
+
+        if (Array.isArray(data.medicines) && data.medicines.length) {
+          medicines = data.medicines;
+          saveMedicines();
+          renderMedicineChecklist();
+          renderMedicineManageList();
+        }
+
+        if (Array.isArray(data.records)) {
+          const localMap = new Map(records.map(r => [r.date, r]));
+          data.records.forEach(r => {
+            if (!r || !r.date) return;
+            const local = localMap.get(r.date);
+            if (!local) {
+              localMap.set(r.date, r);
+            } else {
+              const localTime = new Date(local.updatedAt || 0).getTime();
+              const remoteTime = new Date(r.updatedAt || 0).getTime();
+              if (remoteTime >= localTime) localMap.set(r.date, r);
+            }
+          });
+          records = Array.from(localMap.values()).sort((a,b) => b.date.localeCompare(a.date));
+          saveRecords();
+        }
+
+        render();
+        isRemoteApplying = false;
+        lastRemoteSignature = makeSignature();
+        setSyncStatus("自動同期中", "");
+      } catch (err) {
+        isRemoteApplying = false;
+        setSyncStatus("同期エラー", "err");
+        console.error(err);
+      }
+    }
+
+    async function saveRemoteAll(silent = false) {
+      if (!GAS_API_URL || isRemoteApplying || isSavingRemote) return;
+      isSavingRemote = true;
+      try {
+        if (!silent) setSyncStatus("保存同期中...", "warn");
+        const res = await fetch(GAS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "saveAll",
+            records,
+            medicines
+          })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "remote save error");
+        lastRemoteSignature = makeSignature();
+        setSyncStatus("自動同期中", "");
+      } catch (err) {
+        setSyncStatus("ローカル保存のみ", "err");
+        console.error(err);
+      } finally {
+        isSavingRemote = false;
+      }
+    }
+
+    function startAutoSync() {
+      fetchRemoteData(true).then(() => {
+        if (records.length || medicines.length) saveRemoteAll(true);
+      });
+      setInterval(() => {
+        fetchRemoteData(true);
+      }, AUTO_SYNC_MS);
+    }
 
     function loadMedicines() {
       try {
@@ -670,6 +796,7 @@
         saveMedicines();
         renderMedicineChecklist();
         renderMedicineManageList();
+        saveRemoteAll(true);
       }
       input.value = "";
     }
@@ -681,6 +808,7 @@
       saveMedicines();
       renderMedicineChecklist();
       renderMedicineManageList();
+      saveRemoteAll(true);
     }
 
     function todayString() {
@@ -743,7 +871,8 @@
       records.sort((a, b) => b.date.localeCompare(a.date));
       saveRecords();
       render();
-      alert("保存しました");
+      saveRemoteAll(false);
+      alert("保存しました。自動同期します");
     }
 
     function editRecord(date) {
@@ -773,6 +902,7 @@
       records = records.filter(r => r.date !== date);
       saveRecords();
       render();
+      saveRemoteAll(false);
     }
 
     function deleteAll() {
@@ -780,6 +910,7 @@
       records = [];
       saveRecords();
       render();
+      saveRemoteAll(false);
     }
 
     function clearForm() {
@@ -838,7 +969,7 @@
               <div class="small">服薬 ${escapeHTML(r.medicineTime || "-")} ／ 就寝 ${escapeHTML(r.sleepTime || "-")}</div>
               <div class="small">飲んだ薬：${escapeHTML((r.medicinesTaken && r.medicinesTaken.length) ? r.medicinesTaken.join("、") : "-")}</div>
             </div>
-            <div class="buttons" style="margin:0;">
+            <div class="buttons" style="margin:0;"><span id="syncStatus" class="sync-status warn">自動同期準備中</span>
               <button class="gray" onclick="editRecord('${r.date}')">編集</button>
               <button class="danger" onclick="deleteRecord('${r.date}')">削除</button>
             </div>
@@ -901,7 +1032,8 @@
           records = Array.from(map.values()).sort((a,b) => b.date.localeCompare(a.date));
           saveRecords();
           render();
-          alert("JSONを読み込みました。同じ日付の記録は上書きしました。");
+          saveRemoteAll(false);
+          alert("JSONを読み込みました。同じ日付の記録は上書きしました。自動同期します。");
         } catch (e) {
           alert("読み込みに失敗しました。JSON形式を確認してください。");
         } finally {
@@ -954,6 +1086,7 @@
     document.getElementById("date").value = todayString();
     loadMedicines();
     loadRecords();
+    startAutoSync();
   </script>
 </body>
 </html>
