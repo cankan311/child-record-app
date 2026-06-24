@@ -6,363 +6,80 @@
 <title>あおはノート</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#5ab5d3">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="あおはノート">
 <style>
 :root {
-  --sky:    #5ab5d3;
-  --sky-lt: #d4f0fa;
-  --sky-dk: #3d97b8;
-  --pink:   #f7a8b8;
-  --pink-lt:#fde8ee;
-  --bg:     #eef8fc;
-  --card:   #ffffff;
-  --text:   #2c3e50;
-  --muted:  #7a8fa0;
-  --border: #c2dfe9;
-  --ok:     #5eb87a;
-  --danger: #e05c5c;
-  --radius: 12px;
+  --sky:#5ab5d3; --sky-lt:#d4f0fa; --sky-dk:#3d97b8;
+  --bg:#eef8fc; --card:#fff; --text:#2c3e50; --muted:#7a8fa0;
+  --border:#c2dfe9; --ok:#5eb87a; --danger:#e05c5c; --r:12px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { -webkit-text-size-adjust: 100%; }
-body {
-  font-family: 'Hiragino Maru Gothic ProN','Hiragino Sans','Yu Gothic UI',sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 15px;
-  line-height: 1.6;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-/* ── ヘッダー ── */
-.hdr {
-  background: linear-gradient(135deg, var(--sky) 0%, var(--sky-dk) 100%);
-  color: white;
-  padding: 10px 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  position: sticky;
-  top: 0;
-  z-index: 200;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.12);
-}
-.hdr-icon {
-  width: 34px; height: 34px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: rgba(255,255,255,0.3);
-  flex-shrink: 0;
-}
-.hdr-icon-fallback {
-  width: 34px; height: 34px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.3);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px; flex-shrink: 0;
-}
-.hdr h1 { font-size: 18px; font-weight: 700; letter-spacing: .03em; }
-.hdr h1 small { font-size: 11px; font-weight: 400; opacity: .8; display: block; }
-.sync-badge {
-  margin-left: auto;
-  font-size: 10px;
-  opacity: .85;
-  background: rgba(255,255,255,0.2);
-  padding: 3px 8px;
-  border-radius: 10px;
-  white-space: nowrap;
-}
-
-/* ── タブバー ── */
-.tabs {
-  display: flex;
-  background: white;
-  border-bottom: 2px solid var(--border);
-  position: sticky;
-  top: 55px;
-  z-index: 199;
-  overflow-x: auto;
-}
-.tabs::-webkit-scrollbar { display: none; }
-.tab-btn {
-  flex: 1;
-  min-width: 64px;
-  padding: 9px 2px;
-  border: none;
-  background: none;
-  font-size: 12px;
-  color: var(--muted);
-  cursor: pointer;
-  border-bottom: 3px solid transparent;
-  transition: color .15s, border-color .15s;
-  white-space: nowrap;
-}
-.tab-btn.active {
-  color: var(--sky-dk);
-  border-bottom-color: var(--sky-dk);
-  font-weight: 700;
-}
-
-/* ── コンテンツ ── */
-.tab-pane { display: none; padding: 14px; max-width: 660px; margin: 0 auto; }
-.tab-pane.active { display: block; }
-
-/* ── カード ── */
-.card {
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 14px;
-  margin-bottom: 14px;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.07);
-  border: 1px solid var(--border);
-}
-.card-ttl {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--sky-dk);
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-/* ── フォーム共通 ── */
-.fg { margin-bottom: 12px; }
-.fg label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-.fg input[type=date],
-.fg input[type=time],
-.fg textarea {
-  width: 100%;
-  padding: 8px 11px;
-  border: 1.5px solid var(--border);
-  border-radius: 8px;
-  font-size: 15px;
-  font-family: inherit;
-  background: white;
-  color: var(--text);
-  transition: border-color .15s;
-  -webkit-appearance: none;
-}
-.fg input:focus,
-.fg textarea:focus { outline: none; border-color: var(--sky); }
-.fg textarea { resize: vertical; min-height: 64px; }
-
-/* ── ラジオ風ボタン ── */
-.chip-group { display: flex; flex-wrap: wrap; gap: 5px; }
-.chip-group input[type=radio] { display: none; }
-.chip {
-  display: inline-block;
-  padding: 5px 12px;
-  border: 1.5px solid var(--border);
-  border-radius: 20px;
-  font-size: 13px;
-  background: white;
-  cursor: pointer;
-  transition: all .12s;
-  user-select: none;
-}
-.chip-group input[type=radio]:checked + .chip {
-  background: var(--sky-dk);
-  border-color: var(--sky-dk);
-  color: white;
-}
-
-/* ── 薬アイテム ── */
-.med-item {
-  border: 1.5px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 9px;
-  background: var(--sky-lt);
-  transition: all .15s;
-}
-.med-item.on {
-  border-color: var(--sky-dk);
-  background: #e2f4fd;
-}
-.med-hdr {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 0;
-}
-.med-name { font-size: 14px; font-weight: 600; cursor: pointer; }
-.med-opts {
-  display: none;
-  grid-template-columns: 1fr 1fr;
-  gap: 7px;
-  margin-top: 9px;
-}
-.med-item.on .med-opts { display: grid; }
-.med-opts select {
-  width: 100%;
-  padding: 6px 8px;
-  border: 1.5px solid var(--border);
-  border-radius: 7px;
-  font-size: 13px;
-  font-family: inherit;
-  background: white;
-}
-.med-opts select:focus { outline: none; border-color: var(--sky); }
-.med-opts .opt-label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 3px; }
-
-/* ── チェックボックス ── */
-.cbx {
-  width: 20px; height: 20px;
-  cursor: pointer;
-  accent-color: var(--sky-dk);
-  flex-shrink: 0;
-}
-
-/* ── スライダー ── */
-.slider-wrap { display: flex; align-items: center; gap: 10px; }
-.slider-wrap input[type=range] {
-  flex: 1;
-  height: 6px;
-  accent-color: var(--sky-dk);
-  cursor: pointer;
-}
-.slider-val {
-  min-width: 28px;
-  text-align: center;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--sky-dk);
-}
-
-/* ── ボタン ── */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 9px;
-  font-size: 15px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: opacity .15s, transform .08s;
-  -webkit-tap-highlight-color: transparent;
-}
-.btn:active { transform: scale(.97); }
-.btn-primary { background: var(--sky-dk); color: white; }
-.btn-primary:disabled { background: #aaa; cursor: not-allowed; transform: none; }
-.btn-ghost { background: white; border: 1.5px solid var(--border); color: var(--text); }
-.btn-danger { background: var(--danger); color: white; }
-.btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 7px; }
-
-/* ── 記録カード（一覧） ── */
-.rec-card {
-  background: white;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  padding: 12px 13px;
-  margin-bottom: 11px;
-}
-.rec-hdr {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-.rec-date { font-size: 16px; font-weight: 700; color: var(--sky-dk); }
-.rec-meta { font-size: 11px; color: var(--muted); }
-.rec-body { font-size: 13px; }
-.rec-row { display: flex; gap: 6px; padding: 2px 0; }
-.rec-lbl { color: var(--muted); min-width: 72px; flex-shrink: 0; font-size: 12px; }
-.rec-val { color: var(--text); word-break: break-word; }
-.rec-acts { display: flex; gap: 7px; margin-top: 9px; flex-wrap: wrap; }
-
-/* ── 概要グリッド ── */
-.summ-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-.summ-item {
-  background: var(--sky-lt);
-  border-radius: 9px;
-  padding: 9px 11px;
-}
-.summ-date { font-size: 13px; font-weight: 700; color: var(--sky-dk); }
-.summ-sub { font-size: 12px; color: var(--text); margin-top: 2px; }
-
-/* ── 薬管理 ── */
-.med-mgr-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 11px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  margin-bottom: 7px;
-  background: white;
-}
-.med-mgr-name { flex: 1; font-size: 14px; }
-
-/* ── 空状態 ── */
-.empty { text-align: center; padding: 36px 16px; color: var(--muted); font-size: 14px; }
-.empty .e-icon { font-size: 40px; display: block; margin-bottom: 8px; }
-
-/* ── フォームステータス ── */
-.form-status {
-  font-size: 12px;
-  color: var(--muted);
-  padding: 6px 10px;
-  background: var(--sky-lt);
-  border-radius: 7px;
-  margin-bottom: 12px;
-  display: none;
-}
-.form-status.visible { display: block; }
-
-/* ── トースト ── */
-.toast {
-  position: fixed;
-  bottom: max(24px, env(safe-area-inset-bottom, 24px));
-  left: 50%;
-  transform: translateX(-50%) translateY(10px);
-  background: rgba(30,42,52,0.92);
-  color: white;
-  padding: 10px 18px;
-  border-radius: 22px;
-  font-size: 14px;
-  z-index: 9999;
-  opacity: 0;
-  transition: opacity .25s, transform .25s;
-  pointer-events: none;
-  white-space: nowrap;
-  backdrop-filter: blur(6px);
-}
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* ── スピナー ── */
-.spinner {
-  display: inline-block;
-  width: 16px; height: 16px;
-  border: 2.5px solid rgba(255,255,255,.35);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin .65s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ── セクション間スペース ── */
-.btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hiragino Maru Gothic ProN','Hiragino Sans',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;padding-bottom:env(safe-area-inset-bottom)}
+.hdr{background:linear-gradient(135deg,var(--sky),var(--sky-dk));color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.hdr img{width:34px;height:34px;border-radius:50%;object-fit:cover}
+.hdr h1{font-size:18px;font-weight:700}
+.hdr h1 small{font-size:11px;font-weight:400;opacity:.8;display:block}
+.badge{margin-left:auto;font-size:10px;background:rgba(255,255,255,.2);padding:3px 8px;border-radius:10px;white-space:nowrap}
+.tabs{display:flex;background:#fff;border-bottom:2px solid var(--border);position:sticky;top:55px;z-index:199}
+.tab-btn{flex:1;padding:9px 2px;border:none;background:none;font-size:12px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent}
+.tab-btn.active{color:var(--sky-dk);border-bottom-color:var(--sky-dk);font-weight:700}
+.pane{display:none;padding:14px;max-width:660px;margin:0 auto}
+.pane.active{display:block}
+.card{background:var(--card);border-radius:var(--r);padding:14px;margin-bottom:14px;box-shadow:0 1px 6px rgba(0,0,0,.07);border:1px solid var(--border)}
+.card-ttl{font-size:13px;font-weight:700;color:var(--sky-dk);margin-bottom:12px}
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.fg input[type=date],.fg input[type=time],.fg textarea{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:15px;font-family:inherit;background:#fff;-webkit-appearance:none}
+.fg textarea{resize:vertical;min-height:64px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chips input[type=radio]{display:none}
+.chip{display:inline-block;padding:5px 12px;border:1.5px solid var(--border);border-radius:20px;font-size:13px;background:#fff;cursor:pointer}
+.chips input[type=radio]:checked+.chip{background:var(--sky-dk);border-color:var(--sky-dk);color:#fff}
+.mi{border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:9px;background:var(--sky-lt)}
+.mi.on{border-color:var(--sky-dk);background:#e2f4fd}
+.mi-hdr{display:flex;align-items:center;gap:10px}
+.mi-name{font-size:14px;font-weight:600;cursor:pointer}
+.mi-opts{display:none;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
+.mi.on .mi-opts{display:grid}
+.mi-opts select{width:100%;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit}
+.cbx{width:20px;height:20px;cursor:pointer;accent-color:var(--sky-dk);flex-shrink:0}
+.sw{display:flex;align-items:center;gap:10px}
+.sw input[type=range]{flex:1;accent-color:var(--sky-dk)}
+.sv{min-width:28px;text-align:center;font-size:20px;font-weight:700;color:var(--sky-dk)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:10px 18px;border:none;border-radius:9px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer}
+.btn-p{background:var(--sky-dk);color:#fff}
+.btn-p:disabled{background:#aaa;cursor:not-allowed}
+.btn-g{background:#fff;border:1.5px solid var(--border);color:var(--text)}
+.btn-d{background:var(--danger);color:#fff}
+.btn-sm{padding:6px 12px;font-size:13px;border-radius:7px}
+.rc{background:#fff;border-radius:10px;border:1px solid var(--border);padding:12px 13px;margin-bottom:11px}
+.rc-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.rc-date{font-size:16px;font-weight:700;color:var(--sky-dk)}
+.rc-meta{font-size:11px;color:var(--muted)}
+.rc-row{display:flex;gap:6px;padding:2px 0;font-size:13px}
+.rc-lbl{color:var(--muted);min-width:72px;flex-shrink:0;font-size:12px}
+.rc-acts{display:flex;gap:7px;margin-top:9px}
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.si{background:var(--sky-lt);border-radius:9px;padding:9px 11px}
+.si-d{font-size:13px;font-weight:700;color:var(--sky-dk)}
+.si-s{font-size:12px;margin-top:2px}
+.mi-mgr{display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;margin-bottom:7px;background:#fff}
+.mi-mgr-n{flex:1;font-size:14px}
+.empty{text-align:center;padding:36px 16px;color:var(--muted);font-size:14px}
+.fs{font-size:12px;color:var(--muted);padding:6px 10px;background:var(--sky-lt);border-radius:7px;margin-bottom:12px;display:none}
+.fs.v{display:block}
+.toast{position:fixed;bottom:max(24px,env(safe-area-inset-bottom,24px));left:50%;transform:translateX(-50%) translateY(10px);background:rgba(30,42,52,.92);color:#fff;padding:10px 18px;border-radius:22px;font-size:14px;z-index:9999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.spin{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .65s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 </style>
 </head>
 <body>
-
-<!-- ヘッダー -->
 <header class="hdr">
-  <img class="hdr-icon" src="aoha-icon.png" alt="" id="appIcon"
-       onerror="this.style.display='none'; document.getElementById('iconFallback').style.display='flex'">
-  <span class="hdr-icon-fallback" id="iconFallback" style="display:none">🌿</span>
-  <h1>あおはノート <small>服薬・パニック記録</small></h1>
-  <span class="sync-badge" id="syncBadge">読込中…</span>
+  <img src="aoha-icon.png" alt="" onerror="this.style.display='none'">
+  <h1>あおはノート<small>服薬・パニック記録</small></h1>
+  <span class="badge" id="badge">読込中…</span>
 </header>
-
-<!-- タブ -->
 <nav class="tabs">
   <button class="tab-btn active" data-tab="form" onclick="showTab('form',this)">📝 記録</button>
   <button class="tab-btn" data-tab="list" onclick="showTab('list',this)">📋 一覧</button>
@@ -370,762 +87,482 @@ body {
   <button class="tab-btn" data-tab="settings" onclick="showTab('settings',this)">⚙️ 設定</button>
 </nav>
 
-<!-- ===== 記録フォーム ===== -->
-<div class="tab-pane active" id="pane-form">
-
-  <div class="form-status" id="formStatus"></div>
-
-  <!-- 基本 -->
+<div class="pane active" id="pane-form">
+  <div class="fs" id="fstat"></div>
   <div class="card">
     <div class="card-ttl">📅 基本情報</div>
-    <div class="fg">
-      <label>日付</label>
-      <input type="date" id="f-date">
-    </div>
-    <div class="fg">
-      <label>記録者</label>
-      <div class="chip-group">
-        <label><input type="radio" name="recorder" value="父"><span class="chip">父</span></label>
-        <label><input type="radio" name="recorder" value="母" checked><span class="chip">母</span></label>
-        <label><input type="radio" name="recorder" value="その他"><span class="chip">その他</span></label>
-      </div>
-    </div>
-    <div class="fg">
-      <label>就寝時間</label>
-      <input type="time" id="f-sleepTime">
-    </div>
+    <div class="fg"><label>日付</label><input type="date" id="f-date"></div>
+    <div class="fg"><label>記録者</label><div class="chips">
+      <label><input type="radio" name="recorder" value="父"><span class="chip">父</span></label>
+      <label><input type="radio" name="recorder" value="母" checked><span class="chip">母</span></label>
+      <label><input type="radio" name="recorder" value="その他"><span class="chip">その他</span></label>
+    </div></div>
+    <div class="fg"><label>就寝時間</label><input type="time" id="f-sleep"></div>
   </div>
-
-  <!-- 服薬 -->
-  <div class="card">
-    <div class="card-ttl">💊 飲んだ薬</div>
-    <div id="medCheckArea"><!-- JS生成 --></div>
-  </div>
-
-  <!-- パニック -->
+  <div class="card"><div class="card-ttl">💊 飲んだ薬</div><div id="medArea"></div></div>
   <div class="card">
     <div class="card-ttl">⚡ パニック・癇癪</div>
-    <div class="fg">
-      <label>夜のパニックの強さ（0〜10）</label>
-      <div class="slider-wrap">
-        <input type="range" id="f-nightPanic" min="0" max="10" value="0">
-        <span class="slider-val" id="val-nightPanic">0</span>
-      </div>
-    </div>
-    <div class="fg">
-      <label>朝のパニックの強さ（0〜10）</label>
-      <div class="slider-wrap">
-        <input type="range" id="f-morningPanic" min="0" max="10" value="0">
-        <span class="slider-val" id="val-morningPanic">0</span>
-      </div>
-    </div>
-    <div class="fg">
-      <label>癇癪・パニックが起きた時間帯</label>
-      <div class="chip-group">
-        <label><input type="radio" name="panicTimeSlot" value="朝"><span class="chip">朝</span></label>
-        <label><input type="radio" name="panicTimeSlot" value="昼"><span class="chip">昼</span></label>
-        <label><input type="radio" name="panicTimeSlot" value="夕方"><span class="chip">夕方</span></label>
-        <label><input type="radio" name="panicTimeSlot" value="晩"><span class="chip">晩</span></label>
-        <label><input type="radio" name="panicTimeSlot" value="就寝前"><span class="chip">就寝前</span></label>
-        <label><input type="radio" name="panicTimeSlot" value="なし" checked><span class="chip">なし</span></label>
-      </div>
-    </div>
+    <div class="fg"><label>夜のパニックの強さ（0〜10）</label><div class="sw"><input type="range" id="f-np" min="0" max="10" value="0"><span class="sv" id="vNp">0</span></div></div>
+    <div class="fg"><label>朝のパニックの強さ（0〜10）</label><div class="sw"><input type="range" id="f-mp" min="0" max="10" value="0"><span class="sv" id="vMp">0</span></div></div>
+    <div class="fg"><label>癇癪・パニックが起きた時間帯</label><div class="chips">
+      <label><input type="radio" name="pts" value="朝"><span class="chip">朝</span></label>
+      <label><input type="radio" name="pts" value="昼"><span class="chip">昼</span></label>
+      <label><input type="radio" name="pts" value="夕方"><span class="chip">夕方</span></label>
+      <label><input type="radio" name="pts" value="晩"><span class="chip">晩</span></label>
+      <label><input type="radio" name="pts" value="就寝前"><span class="chip">就寝前</span></label>
+      <label><input type="radio" name="pts" value="なし" checked><span class="chip">なし</span></label>
+    </div></div>
   </div>
-
-  <!-- 体調 -->
   <div class="card">
     <div class="card-ttl">🌡️ 体調</div>
-    <div class="fg">
-      <label>腹痛・吐き気</label>
-      <div class="chip-group">
-        <label><input type="radio" name="stomach" value="なし" checked><span class="chip">なし</span></label>
-        <label><input type="radio" name="stomach" value="腹痛"><span class="chip">腹痛</span></label>
-        <label><input type="radio" name="stomach" value="吐き気"><span class="chip">吐き気</span></label>
-      </div>
-    </div>
-    <div class="fg">
-      <label>眠気・ふらつき</label>
-      <div class="chip-group">
-        <label><input type="radio" name="sleepy" value="なし" checked><span class="chip">なし</span></label>
-        <label><input type="radio" name="sleepy" value="眠気"><span class="chip">眠気</span></label>
-        <label><input type="radio" name="sleepy" value="ふらつき"><span class="chip">ふらつき</span></label>
-      </div>
-    </div>
-    <div class="fg">
-      <label>崩れ方は軽くなったか</label>
-      <div class="chip-group">
-        <label><input type="radio" name="meltdownChange" value="軽くなった"><span class="chip">軽くなった</span></label>
-        <label><input type="radio" name="meltdownChange" value="変わらない" checked><span class="chip">変わらない</span></label>
-        <label><input type="radio" name="meltdownChange" value="悪化"><span class="chip">悪化</span></label>
-      </div>
-    </div>
-    <div class="fg">
-      <label>妹への攻撃性</label>
-      <div class="chip-group">
-        <label><input type="radio" name="sisterAggression" value="減った"><span class="chip">減った</span></label>
-        <label><input type="radio" name="sisterAggression" value="変わらない" checked><span class="chip">変わらない</span></label>
-        <label><input type="radio" name="sisterAggression" value="増えた"><span class="chip">増えた</span></label>
-      </div>
-    </div>
+    <div class="fg"><label>腹痛・吐き気</label><div class="chips">
+      <label><input type="radio" name="stm" value="なし" checked><span class="chip">なし</span></label>
+      <label><input type="radio" name="stm" value="腹痛"><span class="chip">腹痛</span></label>
+      <label><input type="radio" name="stm" value="吐き気"><span class="chip">吐き気</span></label>
+    </div></div>
+    <div class="fg"><label>眠気・ふらつき</label><div class="chips">
+      <label><input type="radio" name="sly" value="なし" checked><span class="chip">なし</span></label>
+      <label><input type="radio" name="sly" value="眠気"><span class="chip">眠気</span></label>
+      <label><input type="radio" name="sly" value="ふらつき"><span class="chip">ふらつき</span></label>
+    </div></div>
+    <div class="fg"><label>崩れ方は軽くなったか</label><div class="chips">
+      <label><input type="radio" name="mc" value="軽くなった"><span class="chip">軽くなった</span></label>
+      <label><input type="radio" name="mc" value="変わらない" checked><span class="chip">変わらない</span></label>
+      <label><input type="radio" name="mc" value="悪化"><span class="chip">悪化</span></label>
+    </div></div>
+    <div class="fg"><label>妹への攻撃性</label><div class="chips">
+      <label><input type="radio" name="sa" value="減った"><span class="chip">減った</span></label>
+      <label><input type="radio" name="sa" value="変わらない" checked><span class="chip">変わらない</span></label>
+      <label><input type="radio" name="sa" value="増えた"><span class="chip">増えた</span></label>
+    </div></div>
   </div>
-
-  <!-- メモ -->
   <div class="card">
     <div class="card-ttl">📝 メモ</div>
-    <div class="fg">
-      <label>いつもと違う様子</label>
-      <textarea id="f-unusual" placeholder="例：食欲がなかった、ぼーっとしていた…"></textarea>
-    </div>
-    <div class="fg">
-      <label>本人に聞いた癇癪・不安の理由</label>
-      <textarea id="f-childReason" placeholder="例：先生に怒られたのが嫌だった…"></textarea>
-    </div>
-    <div class="fg">
-      <label>親が予想した原因・きっかけ</label>
-      <textarea id="f-parentReason" placeholder="例：疲れていた、学校でうまくいかなかった…"></textarea>
-    </div>
-    <div class="fg">
-      <label>メモ</label>
-      <textarea id="f-memo" rows="3" placeholder="その他、気になること…"></textarea>
-    </div>
+    <div class="fg"><label>いつもと違う様子</label><textarea id="f-un" placeholder="例：食欲がなかった…"></textarea></div>
+    <div class="fg"><label>本人に聞いた癇癪・不安の理由</label><textarea id="f-cr" placeholder="例：先生に怒られたのが嫌だった…"></textarea></div>
+    <div class="fg"><label>親が予想した原因・きっかけ</label><textarea id="f-pr" placeholder="例：疲れていた…"></textarea></div>
+    <div class="fg"><label>メモ</label><textarea id="f-mo" rows="3" placeholder="その他…"></textarea></div>
   </div>
-
-  <!-- 保存ボタン -->
   <div class="btn-row">
-    <button class="btn btn-primary" id="saveBtn" onclick="saveRecord()">💾 保存する</button>
-    <button class="btn btn-ghost" onclick="resetForm()">↩ 入力リセット</button>
-  </div>
-
-</div><!-- /pane-form -->
-
-<!-- ===== 一覧 ===== -->
-<div class="tab-pane" id="pane-list">
-  <div id="listArea"><div class="empty"><span class="e-icon">📭</span>読み込み中…</div></div>
-</div>
-
-<!-- ===== 概要 ===== -->
-<div class="tab-pane" id="pane-summary">
-  <div class="card">
-    <div class="card-ttl">📊 直近7件の概要</div>
-    <div id="summaryArea"><div class="empty"><span class="e-icon">📊</span>読み込み中…</div></div>
+    <button class="btn btn-p" id="saveBtn" onclick="saveRecord()">💾 保存する</button>
+    <button class="btn btn-g" onclick="resetForm()">↩ 入力リセット</button>
   </div>
 </div>
 
-<!-- ===== 設定 ===== -->
-<div class="tab-pane" id="pane-settings">
+<div class="pane" id="pane-list"><div id="listArea"><div class="empty">読み込み中…</div></div></div>
+<div class="pane" id="pane-summary"><div class="card"><div class="card-ttl">📊 直近7件の概要</div><div id="summArea"><div class="empty">読み込み中…</div></div></div></div>
+<div class="pane" id="pane-settings">
   <div class="card">
     <div class="card-ttl">💊 薬リスト管理</div>
-    <div id="medMgrArea"></div>
-    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
-      <input type="text" id="newMedName"
-             placeholder="追加する薬の名前"
-             style="flex:1;min-width:130px;padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;">
-      <button class="btn btn-primary btn-sm" onclick="addMedicine()">＋ 追加</button>
+    <div id="medMgr"></div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+      <input type="text" id="newMed" placeholder="追加する薬の名前" style="flex:1;min-width:130px;padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit">
+      <button class="btn btn-p btn-sm" onclick="addMed()">＋ 追加</button>
     </div>
-    <div style="margin-top:11px;">
-      <button class="btn btn-primary btn-sm" onclick="saveMedicineList()">💾 薬リストを保存</button>
-    </div>
+    <div style="margin-top:11px"><button class="btn btn-p btn-sm" onclick="saveMeds()">💾 薬リストを保存</button></div>
   </div>
-
+  <div class="card">
+    <div class="card-ttl">📡 端末間共有</div>
+    <p style="font-size:13px;margin-bottom:8px">夫婦で同じデータを使うには、以下のBIN IDを相手の端末で入力してください。</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input type="text" id="binIdInput" placeholder="BIN IDを入力" style="flex:1;min-width:160px;padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit">
+      <button class="btn btn-p btn-sm" onclick="setBinId()">設定</button>
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">現在のBIN ID: <strong id="currentBinId">—</strong> <button class="btn btn-g btn-sm" style="font-size:11px;padding:3px 8px" onclick="copyBinId()">コピー</button></div>
+  </div>
   <div class="card">
     <div class="card-ttl" style="color:var(--danger)">⚠️ データ管理</div>
-    <button class="btn btn-danger btn-sm" onclick="deleteAllRecords()">🗑️ 全記録を削除</button>
-    <p style="font-size:12px;color:var(--muted);margin-top:8px;">削除後は元に戻せません。慎重に操作してください。</p>
+    <button class="btn btn-d btn-sm" onclick="deleteAll()">🗑️ 全記録を削除</button>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
-/* =========================================================
-   あおはノート - フロントエンドロジック
-   =========================================================
-   ★ 自動同期でフォームは絶対に触らない
-   ★ フォームを更新するのは:
-      - 初回ページ表示 (空フォーム初期化)
-      - 「編集」ボタンを押したとき
-      - 「入力リセット」ボタンを押したとき
-      - 保存完了後 (フォームはそのまま維持)
-   ========================================================= */
+const API_KEY = '$2a$10$qVb/eck45/mODT3y8ndxDuh0EboYwA62qav0Xx2eplDR5udOrlw9y';
+const BIN_ID_KEY = 'aoha_bin_id';
+const DRAFT_KEY  = 'aoha_draft';
+const SYNC_MS = 20000;
 
-const GAS_URL  = 'https://script.google.com/macros/s/AKfycbyOSMUnAvy8ZY2yZZxOwC7k5PPtEu53evJ3jC02mv9TzU6UgLyqYqLaEijv4UVZZtqtZw/exec';
-const DRAFT_KEY = 'aoha_note_form_draft';
-const SYNC_MS   = 20000; // 自動同期間隔(20秒)
-
-// ===== dirty flag =====
-let formDirty   = false;  // フォームに変更があるか
-let editingDate = null;   // 編集中の日付 (null=新規)
-let isSaving    = false;  // 保存中フラグ
-
-// ===== リモートデータ =====
-let remoteRecords = [];
-let medicines     = [];
-
-const DEFAULT_MEDICINES = [
-  'アトモキセチン内用液0.4%',
-  'セルトラリン錠25mg',
-  'クロチアゼパム錠5mg',
-  'ツムラ甘麦大棗湯'
+const DEFAULT_MEDS = [
+  'アトモキセチン内用液0.4%','セルトラリン錠25mg','クロチアゼパム錠5mg','ツムラ甘麦大棗湯'
 ];
 
-/* ============================================================
-   初期化
-   ============================================================ */
+let records  = [];
+let medicines = DEFAULT_MEDS.map(n => ({name:n,active:true}));
+let formDirty = false, editingDate = null, isSaving = false;
+let binId = localStorage.getItem(BIN_ID_KEY) || null;
+
+// ===== JSONBin API =====
+async function binGet() {
+  if (!binId) return null;
+  const r = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+    headers:{'X-Master-Key':API_KEY}
+  });
+  const d = await r.json();
+  return d.record;
+}
+
+async function binPut(data) {
+  if (!binId) await binCreate();
+  const r = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+    method:'PUT',
+    headers:{'Content-Type':'application/json','X-Master-Key':API_KEY},
+    body: JSON.stringify(data)
+  });
+  return await r.json();
+}
+
+async function binCreate() {
+  const r = await fetch('https://api.jsonbin.io/v3/b', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-Master-Key':API_KEY,'X-Bin-Name':'aoha-note','X-Bin-Private':'false'},
+    body: JSON.stringify({records:[], medicines: DEFAULT_MEDS.map(n=>({name:n,active:true}))})
+  });
+  const d = await r.json();
+  binId = d.metadata.id;
+  localStorage.setItem(BIN_ID_KEY, binId);
+  document.getElementById('currentBinId').textContent = binId;
+}
+
+// ===== 初期化 =====
 document.addEventListener('DOMContentLoaded', () => {
-  // スライダーの表示値
-  ['nightPanic','morningPanic'].forEach(id => {
-    const sl = document.getElementById('f-' + id);
-    const vl = document.getElementById('val-' + id);
-    sl.addEventListener('input', () => {
-      vl.textContent = sl.value;
-      onFormChange();
-    });
+  document.getElementById('f-date').value = today();
+  document.getElementById('currentBinId').textContent = binId || '—';
+  if (binId) document.getElementById('binIdInput').value = binId;
+
+  ['f-np','f-mp'].forEach(id => {
+    const sl = document.getElementById(id);
+    const vl = document.getElementById(id === 'f-np' ? 'vNp' : 'vMp');
+    sl.addEventListener('input', () => { vl.textContent = sl.value; dirty(); });
   });
 
-  // フォーム変更検知（dirty flag & 下書き保存）
-  document.querySelectorAll('#pane-form input, #pane-form select, #pane-form textarea')
-    .forEach(el => {
-      el.addEventListener('input',  onFormChange);
-      el.addEventListener('change', onFormChange);
-    });
+  document.querySelectorAll('#pane-form input,#pane-form select,#pane-form textarea')
+    .forEach(el => { el.addEventListener('input', dirty); el.addEventListener('change', dirty); });
 
-  // 今日の日付セット（初回）
-  document.getElementById('f-date').value = todayStr();
-
-  // 薬リスト初期表示（デフォルト）
-  medicines = DEFAULT_MEDICINES.map(n => ({name: n, active: true}));
-  renderMedCheckArea();
-  renderMedMgrArea();
-
-  // 下書きを復元 (非同期で確認)
+  renderMedArea();
+  renderMedMgr();
   restoreDraft();
-
-  // リモートデータ取得
-  fetchRemoteData();
-
-  // 自動同期開始
+  fetchData();
   setInterval(autoSync, SYNC_MS);
 });
 
-function onFormChange() {
-  formDirty = true;
-  saveDraft();
-}
+function dirty() { formDirty = true; saveDraft(); }
 
-/* ============================================================
-   タブ切り替え
-   ============================================================ */
+// ===== タブ =====
 function showTab(name, btn) {
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('pane-' + name).classList.add('active');
+  document.getElementById('pane-'+name).classList.add('active');
   if (btn) btn.classList.add('active');
 }
 
-/* ============================================================
-   データ取得（初回・保存後）
-   ============================================================ */
-async function fetchRemoteData() {
+// ===== データ取得 =====
+async function fetchData() {
   try {
-    const res  = await fetch(GAS_URL + '?action=list');
-    const data = await res.json();
-    if (data.ok) {
-      remoteRecords = data.records  || [];
-      const serverMeds = data.medicines || [];
-      if (serverMeds.length > 0) {
-        medicines = serverMeds;
-        renderMedCheckArea(); // 薬リストが変わった場合だけ再描画
-        renderMedMgrArea();
-      }
+    if (!binId) { await binCreate(); }
+    const data = await binGet();
+    if (data) {
+      records   = data.records   || [];
+      medicines = (data.medicines && data.medicines.length > 0) ? data.medicines : medicines;
     }
-    setBadge('同期済 ' + nowHHmm());
-    renderListOnly();
-    renderSummaryOnly();
-  } catch (e) {
-    setBadge('同期失敗');
-    console.warn('fetchRemoteData error:', e);
-  }
+    setBadge('同期済 ' + hhmm());
+    renderMedArea(); renderMedMgr(); renderList(); renderSumm();
+  } catch(e) { setBadge('同期失敗'); console.warn(e); }
 }
 
-/* ============================================================
-   自動同期
-   ★ フォームは絶対に触らない
-   ★ renderListOnly / renderSummaryOnly だけ
-   ============================================================ */
 async function autoSync() {
   try {
-    const res  = await fetch(GAS_URL + '?action=list');
-    const data = await res.json();
-    if (data.ok) {
-      remoteRecords = data.records  || [];
-      // 薬リストは自動同期で更新しない（入力中かもしれない）
+    const data = await binGet();
+    if (data) {
+      records   = data.records   || [];
+      medicines = (data.medicines && data.medicines.length > 0) ? data.medicines : medicines;
     }
-    setBadge('同期済 ' + nowHHmm());
-    renderListOnly();      // ← フォームに触らない
-    renderSummaryOnly();   // ← フォームに触らない
-  } catch (e) {
-    setBadge('同期失敗');
-  }
+    setBadge('同期済 ' + hhmm());
+    renderList(); renderSumm();
+  } catch(e) { setBadge('同期失敗'); }
 }
 
-/* ============================================================
-   薬チェックエリア（フォーム内）の描画
-   ============================================================ */
-function renderMedCheckArea() {
-  const area = document.getElementById('medCheckArea');
-  const activeMeds = medicines.filter(m => m.active !== false);
-
-  area.innerHTML = activeMeds.map((med, i) => `
-    <div class="med-item" id="mi-${i}">
-      <div class="med-hdr">
-        <input type="checkbox" class="cbx" id="mc-${i}"
-               onchange="onMedCheck(${i})">
-        <label for="mc-${i}" class="med-name">${h(med.name)}</label>
+// ===== 薬エリア描画 =====
+function renderMedArea() {
+  const area = document.getElementById('medArea');
+  const meds = medicines.filter(m => m.active !== false);
+  area.innerHTML = meds.map((m,i) => `
+    <div class="mi" id="mi${i}">
+      <div class="mi-hdr">
+        <input type="checkbox" class="cbx" id="mc${i}" onchange="onMc(${i})">
+        <label for="mc${i}" class="mi-name">${h(m.name)}</label>
       </div>
-      <div class="med-opts" id="mo-${i}">
-        <div>
-          <span class="opt-label">服用時間帯</span>
-          <select id="mts-${i}">
+      <div class="mi-opts" id="mo${i}">
+        <div><span style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px">服用時間帯</span>
+          <select id="mts${i}">
             <option value="">選択</option>
-            <option value="朝">朝</option>
-            <option value="昼">昼</option>
-            <option value="夕方">夕方</option>
-            <option value="晩">晩</option>
-            <option value="就寝前">就寝前</option>
-            <option value="その他">その他</option>
-          </select>
-        </div>
-        <div>
-          <span class="opt-label">飲み方</span>
-          <select id="mhw-${i}">
+            <option>朝</option><option>昼</option><option>夕方</option><option>晩</option><option>就寝前</option><option>その他</option>
+          </select></div>
+        <div><span style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px">飲み方</span>
+          <select id="mhw${i}">
             <option value="">選択</option>
-            <option value="食前">食前</option>
-            <option value="食後">食後</option>
-            <option value="食間">食間</option>
-            <option value="頓服">頓服</option>
-            <option value="その他">その他</option>
-          </select>
-        </div>
+            <option>食前</option><option>食後</option><option>食間</option><option>頓服</option><option>その他</option>
+          </select></div>
       </div>
-    </div>
-  `).join('');
-
-  // 新しく生成した要素にもdirty flag を付ける
-  area.querySelectorAll('input,select').forEach(el => {
-    el.addEventListener('change', onFormChange);
-  });
+    </div>`).join('');
+  area.querySelectorAll('input,select').forEach(el => el.addEventListener('change', dirty));
 }
 
-function onMedCheck(i) {
-  const checked = document.getElementById('mc-' + i).checked;
-  document.getElementById('mi-' + i).classList.toggle('on', checked);
-  onFormChange();
+function onMc(i) {
+  const on = document.getElementById('mc'+i).checked;
+  document.getElementById('mi'+i).classList.toggle('on', on);
+  dirty();
 }
 
-/* ============================================================
-   フォームからデータ取得
-   ============================================================ */
-function getFormData() {
-  const activeMeds = medicines.filter(m => m.active !== false);
-  const takenNames = [];
-  const details    = {};
-
-  activeMeds.forEach((med, i) => {
-    const cbEl = document.getElementById('mc-' + i);
-    if (cbEl && cbEl.checked) {
-      takenNames.push(med.name);
-      details[med.name] = {
-        timeSlot: (document.getElementById('mts-' + i) || {}).value || '',
-        how:      (document.getElementById('mhw-' + i) || {}).value || ''
+// ===== フォームデータ取得 =====
+function getForm() {
+  const meds = medicines.filter(m => m.active !== false);
+  const taken = [], det = {};
+  meds.forEach((m,i) => {
+    const cb = document.getElementById('mc'+i);
+    if (cb && cb.checked) {
+      taken.push(m.name);
+      det[m.name] = {
+        timeSlot: (document.getElementById('mts'+i)||{}).value||'',
+        how:      (document.getElementById('mhw'+i)||{}).value||''
       };
     }
   });
-
   return {
     date:            document.getElementById('f-date').value,
-    recorder:        radio('recorder') || '母',
-    sleepTime:       document.getElementById('f-sleepTime').value || '',
-    medicinesTaken:  takenNames.join(','),
-    medicineDetails: details,
-    nightPanic:      Number(document.getElementById('f-nightPanic').value) || 0,
-    morningPanic:    Number(document.getElementById('f-morningPanic').value) || 0,
-    panicTimeSlot:   radio('panicTimeSlot') || 'なし',
-    stomach:         radio('stomach')       || 'なし',
-    sleepy:          radio('sleepy')        || 'なし',
-    meltdownChange:  radio('meltdownChange')|| '変わらない',
-    sisterAggression:radio('sisterAggression')||'変わらない',
-    unusual:         document.getElementById('f-unusual').value,
-    childReason:     document.getElementById('f-childReason').value,
-    parentReason:    document.getElementById('f-parentReason').value,
-    memo:            document.getElementById('f-memo').value,
+    recorder:        radio('recorder')||'母',
+    sleepTime:       document.getElementById('f-sleep').value||'',
+    medicinesTaken:  taken.join(','),
+    medicineDetails: det,
+    nightPanic:      +document.getElementById('f-np').value||0,
+    morningPanic:    +document.getElementById('f-mp').value||0,
+    panicTimeSlot:   radio('pts')||'なし',
+    stomach:         radio('stm')||'なし',
+    sleepy:          radio('sly')||'なし',
+    meltdownChange:  radio('mc')||'変わらない',
+    sisterAggression:radio('sa')||'変わらない',
+    unusual:         document.getElementById('f-un').value,
+    childReason:     document.getElementById('f-cr').value,
+    parentReason:    document.getElementById('f-pr').value,
+    memo:            document.getElementById('f-mo').value,
   };
 }
 
-/* ============================================================
-   フォームにデータをセット
-   ★ editRecord / resetForm / 初回のみ呼ぶ
-   ============================================================ */
+// ===== フォームにデータをセット =====
 function fillForm(r) {
-  document.getElementById('f-date').value      = normDate(r.date) || todayStr();
-  document.getElementById('f-sleepTime').value = normTime(r.sleepTime || '');
-  setRadio('recorder',         r.recorder         || '母');
-  setRadio('panicTimeSlot',    r.panicTimeSlot    || 'なし');
-  setRadio('stomach',          r.stomach          || 'なし');
-  setRadio('sleepy',           r.sleepy           || 'なし');
-  setRadio('meltdownChange',   r.meltdownChange   || '変わらない');
-  setRadio('sisterAggression', r.sisterAggression || '変わらない');
+  document.getElementById('f-date').value  = r.date || today();
+  document.getElementById('f-sleep').value = r.sleepTime || '';
+  setR('recorder', r.recorder||'母');
+  setR('pts', r.panicTimeSlot||'なし');
+  setR('stm', r.stomach||'なし');
+  setR('sly', r.sleepy||'なし');
+  setR('mc',  r.meltdownChange||'変わらない');
+  setR('sa',  r.sisterAggression||'変わらない');
+  const ns = document.getElementById('f-np'), ms = document.getElementById('f-mp');
+  ns.value = Math.min(+r.nightPanic||0, 10);
+  ms.value = Math.min(+r.morningPanic||0, 10);
+  document.getElementById('vNp').textContent = ns.value;
+  document.getElementById('vMp').textContent = ms.value;
+  document.getElementById('f-un').value = r.unusual||'';
+  document.getElementById('f-cr').value = r.childReason||'';
+  document.getElementById('f-pr').value = r.parentReason||'';
+  document.getElementById('f-mo').value = r.memo||'';
 
-  // パニック値：数値以外（列ずれで文字列が入っている場合）は0にする
-  const ns = document.getElementById('f-nightPanic');
-  const ms = document.getElementById('f-morningPanic');
-  const np = parseInt(r.nightPanic);
-  const mp = parseInt(r.morningPanic);
-  ns.value = isNaN(np) ? 0 : Math.min(np, 10);
-  ms.value = isNaN(mp) ? 0 : Math.min(mp, 10);
-  document.getElementById('val-nightPanic').textContent   = ns.value;
-  document.getElementById('val-morningPanic').textContent = ms.value;
-
-  // メモ欄：updatedAt（ISO日付文字列）が混入していたら除外
-  const cleanMemo = v => (v && !/^\d{4}-\d{2}-\d{2}T/.test(String(v))) ? v : '';
-  document.getElementById('f-unusual').value      = r.unusual      || '';
-  document.getElementById('f-childReason').value  = r.childReason  || '';
-  document.getElementById('f-parentReason').value = r.parentReason || '';
-  document.getElementById('f-memo').value         = cleanMemo(r.memo);
-
-  // 薬：古い形式（medicinesTakenにJSONが丸ごと入っている）にも対応
-  let det = {}, takenNames = [];
-  if (r.medicineDetails && typeof r.medicineDetails === 'object' && Object.keys(r.medicineDetails).length > 0) {
-    det = r.medicineDetails; takenNames = Object.keys(det);
-  } else if (typeof r.medicineDetails === 'string' && r.medicineDetails.trim().startsWith('{')) {
-    try { det = JSON.parse(r.medicineDetails.trim()); takenNames = Object.keys(det); } catch(e) {}
-  }
-  if (takenNames.length === 0) {
-    const mt = (r.medicinesTaken || '').trim();
-    if (mt.startsWith('{')) {
-      try { det = JSON.parse(mt); takenNames = Object.keys(det); } catch(e) {}
-    } else {
-      takenNames = mt ? mt.split(',').map(s => s.trim()).filter(Boolean) : [];
-    }
-  }
-
-  medicines.filter(m => m.active !== false).forEach((med, i) => {
-    const cb = document.getElementById('mc-' + i);
+  const meds = medicines.filter(m => m.active !== false);
+  const taken = (r.medicinesTaken||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const det = (r.medicineDetails && typeof r.medicineDetails === 'object') ? r.medicineDetails : {};
+  meds.forEach((m,i) => {
+    const cb = document.getElementById('mc'+i);
     if (!cb) return;
-    const on = takenNames.includes(med.name);
+    const on = taken.includes(m.name);
     cb.checked = on;
-    document.getElementById('mi-' + i).classList.toggle('on', on);
-    if (on && det[med.name]) {
-      const d = det[med.name];
-      const ts = document.getElementById('mts-' + i);
-      const hw = document.getElementById('mhw-' + i);
-      if (ts) ts.value = d.timeSlot || '';
-      if (hw) hw.value = d.how      || '';
-    } else if (on) {
-      const ts = document.getElementById('mts-' + i);
-      const hw = document.getElementById('mhw-' + i);
-      if (ts) ts.value = '';
-      if (hw) hw.value = '';
+    document.getElementById('mi'+i).classList.toggle('on', on);
+    if (on && det[m.name]) {
+      const ts = document.getElementById('mts'+i), hw = document.getElementById('mhw'+i);
+      if (ts) ts.value = det[m.name].timeSlot||'';
+      if (hw) hw.value = det[m.name].how||'';
     }
   });
 }
 
-/* ============================================================
-   リセット
-   ============================================================ */
+// ===== リセット =====
 function resetForm() {
-  document.getElementById('f-date').value      = todayStr();
-  document.getElementById('f-sleepTime').value = '';
-  setRadio('recorder',         '母');
-  setRadio('panicTimeSlot',    'なし');
-  setRadio('stomach',          'なし');
-  setRadio('sleepy',           'なし');
-  setRadio('meltdownChange',   '変わらない');
-  setRadio('sisterAggression', '変わらない');
-
-  document.getElementById('f-nightPanic').value   = 0;
-  document.getElementById('f-morningPanic').value  = 0;
-  document.getElementById('val-nightPanic').textContent   = '0';
-  document.getElementById('val-morningPanic').textContent = '0';
-  document.getElementById('f-unusual').value      = '';
-  document.getElementById('f-childReason').value  = '';
-  document.getElementById('f-parentReason').value = '';
-  document.getElementById('f-memo').value         = '';
-
-  medicines.filter(m => m.active !== false).forEach((_, i) => {
-    const cb = document.getElementById('mc-' + i);
-    if (cb) {
-      cb.checked = false;
-      document.getElementById('mi-' + i).classList.remove('on');
-      const ts = document.getElementById('mts-' + i);
-      const hw = document.getElementById('mhw-' + i);
-      if (ts) ts.value = '';
-      if (hw) hw.value = '';
-    }
+  document.getElementById('f-date').value  = today();
+  document.getElementById('f-sleep').value = '';
+  setR('recorder','母'); setR('pts','なし'); setR('stm','なし');
+  setR('sly','なし'); setR('mc','変わらない'); setR('sa','変わらない');
+  ['f-np','f-mp'].forEach(id => { document.getElementById(id).value=0; });
+  document.getElementById('vNp').textContent = '0';
+  document.getElementById('vMp').textContent = '0';
+  ['f-un','f-cr','f-pr','f-mo'].forEach(id => { document.getElementById(id).value=''; });
+  medicines.filter(m=>m.active!==false).forEach((_,i) => {
+    const cb = document.getElementById('mc'+i);
+    if (cb) { cb.checked=false; document.getElementById('mi'+i).classList.remove('on'); }
   });
-
-  formDirty   = false;
-  editingDate = null;
+  formDirty=false; editingDate=null;
   localStorage.removeItem(DRAFT_KEY);
-  setFormStatus('');
-  toast('↩ 入力をリセットしました');
+  setFstat(''); toast('↩ 入力をリセットしました');
 }
 
-/* ============================================================
-   保存
-   ============================================================ */
+// ===== 保存 =====
 async function saveRecord() {
   if (isSaving) return;
-  const rec = getFormData();
-  rec.date = normDate(rec.date) || rec.date;
+  const rec = getForm();
   if (!rec.date) { toast('日付を入力してください'); return; }
-
   isSaving = true;
   const btn = document.getElementById('saveBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> 保存中…';
-
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> 保存中…';
   try {
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      headers: {'Content-Type': 'text/plain;charset=utf-8'},
-      body:    JSON.stringify({action: 'upsertRecord', record: rec})
-    });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || '保存失敗');
-
-    formDirty   = false;
-    editingDate = rec.date;
+    rec.updatedAt = new Date().toISOString();
+    // フロントで全件更新（saveAll方式）
+    const idx = records.findIndex(r => r.date === rec.date);
+    if (idx >= 0) records[idx] = rec; else records.push(rec);
+    records.sort((a,b) => a.date.localeCompare(b.date));
+    await binPut({records, medicines});
+    formDirty=false; editingDate=rec.date;
     localStorage.removeItem(DRAFT_KEY);
-    setFormStatus('✅ ' + rec.date + ' を保存しました');
+    setFstat('✅ ' + rec.date + ' を保存しました');
     toast('💾 保存しました！');
-    await fetchRemoteData(); // ★ フォームは触らない。一覧だけ更新
-  } catch(e) {
-    toast('❌ 保存に失敗しました: ' + e.message);
-  } finally {
-    isSaving     = false;
-    btn.disabled = false;
-    btn.innerHTML= '💾 保存する';
-  }
+    renderList(); renderSumm();
+  } catch(e) { toast('❌ 保存失敗: '+e.message); }
+  finally { isSaving=false; btn.disabled=false; btn.innerHTML='💾 保存する'; }
 }
 
-/* ============================================================
-   削除（1件）
-   ============================================================ */
+// ===== 削除 =====
 async function deleteRecord(date) {
   if (!confirm(date + ' の記録を削除しますか？')) return;
   try {
-    const res  = await fetch(GAS_URL, {
-      method: 'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:   JSON.stringify({action:'deleteRecord', date: normDate(date)})
-    });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || '削除失敗');
+    records = records.filter(r => r.date !== date);
+    await binPut({records, medicines});
     toast('🗑️ 削除しました');
-    await fetchRemoteData();
-  } catch(e) {
-    toast('削除エラー: ' + e.message);
-  }
+    renderList(); renderSumm();
+  } catch(e) { toast('削除エラー: '+e.message); }
 }
 
-/* ============================================================
-   全削除
-   ============================================================ */
-async function deleteAllRecords() {
-  if (!confirm('⚠️ すべての記録を削除します。\n本当によろしいですか？\nこの操作は元に戻せません。')) return;
-  if (!confirm('最後の確認です。本当に全削除しますか？')) return;
+async function deleteAll() {
+  if (!confirm('⚠️ 全記録を削除しますか？')) return;
+  if (!confirm('本当に全削除しますか？')) return;
   try {
-    const res  = await fetch(GAS_URL, {
-      method:'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'deleteAllRecords'})
-    });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || '失敗');
-    toast('🗑️ 全記録を削除しました');
-    await fetchRemoteData();
-  } catch(e) {
-    toast('エラー: ' + e.message);
-  }
+    records = [];
+    await binPut({records, medicines});
+    toast('🗑️ 全削除しました');
+    renderList(); renderSumm();
+  } catch(e) { toast('エラー: '+e.message); }
 }
 
-/* ============================================================
-   編集
-   ★ フォームを更新するのはここだけ（自動同期でなく、ユーザー操作）
-   ============================================================ */
+// ===== 編集 =====
 function editRecord(date) {
-  const rec = remoteRecords.find(r => normDate(r.date) === normDate(date));
-  if (!rec) return;
-  fillForm(rec);
-  formDirty   = false;
-  editingDate = rec.date;
-  setFormStatus('✏️ ' + date + ' を編集中');
+  const r = records.find(r => r.date === date);
+  if (!r) return;
+  fillForm(r);
+  formDirty=false; editingDate=date;
+  setFstat('✏️ '+date+' を編集中');
   showTab('form', document.querySelector('.tab-btn[data-tab="form"]'));
-  window.scrollTo({top:0, behavior:'smooth'});
+  window.scrollTo({top:0,behavior:'smooth'});
   toast('✏️ 編集モードになりました');
 }
 
-/* ============================================================
-   一覧描画（自動同期でも呼ぶ・フォームに触らない）
-   ============================================================ */
-function renderListOnly() {
+// ===== 一覧描画 =====
+function renderList() {
   const area = document.getElementById('listArea');
-  if (remoteRecords.length === 0) {
-    area.innerHTML = '<div class="empty"><span class="e-icon">📭</span>まだ記録がありません</div>';
-    return;
-  }
-  const sorted = [...remoteRecords].sort((a,b) => String(b.date).localeCompare(String(a.date)));
-  area.innerHTML = sorted.map(r => buildRecordCard(r)).join('');
+  if (!records.length) { area.innerHTML='<div class="empty">📭 まだ記録がありません</div>'; return; }
+  area.innerHTML = [...records].sort((a,b)=>b.date.localeCompare(a.date)).map(r => {
+    const det = (r.medicineDetails && typeof r.medicineDetails === 'object') ? r.medicineDetails : {};
+    const taken = (r.medicinesTaken||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const medStr = taken.length ? taken.map(n => {
+      const d = det[n]||{};
+      const p = [d.timeSlot,d.how].filter(Boolean).join('・');
+      return h(n)+(p?`（${h(p)}）`:'');
+    }).join('<br>') : 'なし';
+    const sleep = r.sleepTime || '--:--';
+    const memo = (r.memo && !/^\d{4}-\d{2}-\d{2}T/.test(r.memo)) ? r.memo : '';
+    return `<div class="rc">
+      <div class="rc-hdr"><span class="rc-date">${h(r.date)}</span><span class="rc-meta">${h(r.recorder||'')} ｜ 就寝 ${h(sleep)}</span></div>
+      <div>
+        <div class="rc-row"><span class="rc-lbl">💊 薬</span><span>${medStr}</span></div>
+        <div class="rc-row"><span class="rc-lbl">⚡ パニック</span><span>夜 ${r.nightPanic||0} ／ 朝 ${r.morningPanic||0} ｜ ${h(r.panicTimeSlot||'')}</span></div>
+        <div class="rc-row"><span class="rc-lbl">🌡️ 体調</span><span>${h(r.stomach||'')} ｜ ${h(r.sleepy||'')}</span></div>
+        <div class="rc-row"><span class="rc-lbl">📈 変化</span><span>崩れ方: ${h(r.meltdownChange||'')} ｜ 妹: ${h(r.sisterAggression||'')}</span></div>
+        ${r.unusual?`<div class="rc-row"><span class="rc-lbl">🔔 様子</span><span>${h(r.unusual)}</span></div>`:''}
+        ${r.childReason?`<div class="rc-row"><span class="rc-lbl">💬 本人</span><span>${h(r.childReason)}</span></div>`:''}
+        ${r.parentReason?`<div class="rc-row"><span class="rc-lbl">🤔 親の分析</span><span>${h(r.parentReason)}</span></div>`:''}
+        ${memo?`<div class="rc-row"><span class="rc-lbl">📝 メモ</span><span>${h(memo)}</span></div>`:''}
+      </div>
+      <div class="rc-acts">
+        <button class="btn btn-g btn-sm" onclick="editRecord('${h(r.date)}')">✏️ 編集</button>
+        <button class="btn btn-sm" style="background:#fff0f0;border:1px solid #ffcdd2;color:var(--danger)" onclick="deleteRecord('${h(r.date)}')">🗑️ 削除</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-function buildRecordCard(r) {
-  // ── 薬データの解析（古い形式・新しい形式両方に対応） ──
-  let det  = {};
-  let taken = [];
-
-  // medicineDetails が正しくオブジェクトで来ている場合
-  if (r.medicineDetails && typeof r.medicineDetails === 'object' && !Array.isArray(r.medicineDetails)) {
-    det   = r.medicineDetails;
-    taken = Object.keys(det);
-  }
-  // medicineDetails が JSON文字列で来ている場合
-  else if (typeof r.medicineDetails === 'string' && r.medicineDetails.trim().startsWith('{')) {
-    try {
-      det   = JSON.parse(r.medicineDetails.trim());
-      taken = Object.keys(det);
-    } catch(e) {}
-  }
-
-  // taken が空の場合 → medicinesTaken を使う
-  if (taken.length === 0) {
-    const mt = (r.medicinesTaken || '').trim();
-    // medicinesTaken 自体が JSON文字列の場合（古いデータ）
-    if (mt.startsWith('{')) {
-      try {
-        det   = JSON.parse(mt);
-        taken = Object.keys(det);
-      } catch(e) {}
-    } else {
-      taken = mt ? mt.split(',').map(s => s.trim()).filter(Boolean) : [];
-    }
-  }
-
-  const medStr = taken.length > 0
-    ? taken.map(n => {
-        const d = det[n] || {};
-        const p = [d.timeSlot, d.how].filter(Boolean).join('・');
-        return h(n) + (p ? `（${h(p)}）` : '');
-      }).join('<br>')
-    : 'なし';
-
-  const dateStr  = normDate(r.date);
-  const sleepStr = normTime(r.sleepTime) || '--:--';
-  const dh = (v) => h(v || '');
-
-  // メモ欄に updatedAt が混入しないようフィルタ
-  const memoVal = (r.memo && !/^\d{4}-\d{2}-\d{2}T/.test(String(r.memo))) ? r.memo : '';
-
-  return `<div class="rec-card">
-    <div class="rec-hdr">
-      <span class="rec-date">${h(dateStr)}</span>
-      <span class="rec-meta">${dh(r.recorder)} ｜ 就寝 ${h(sleepStr)}</span>
-    </div>
-    <div class="rec-body">
-      <div class="rec-row"><span class="rec-lbl">💊 薬</span><span class="rec-val">${medStr}</span></div>
-      <div class="rec-row"><span class="rec-lbl">⚡ パニック</span><span class="rec-val">夜 ${r.nightPanic||0} ／ 朝 ${r.morningPanic||0} ｜ ${dh(r.panicTimeSlot)}</span></div>
-      <div class="rec-row"><span class="rec-lbl">🌡️ 体調</span><span class="rec-val">${dh(r.stomach)} ｜ ${dh(r.sleepy)}</span></div>
-      <div class="rec-row"><span class="rec-lbl">📈 変化</span><span class="rec-val">崩れ方: ${dh(r.meltdownChange)} ｜ 妹: ${dh(r.sisterAggression)}</span></div>
-      ${r.unusual    ? `<div class="rec-row"><span class="rec-lbl">🔔 様子</span><span class="rec-val">${dh(r.unusual)}</span></div>` : ''}
-      ${r.childReason? `<div class="rec-row"><span class="rec-lbl">💬 本人</span><span class="rec-val">${dh(r.childReason)}</span></div>` : ''}
-      ${r.parentReason?`<div class="rec-row"><span class="rec-lbl">🤔 親の分析</span><span class="rec-val">${dh(r.parentReason)}</span></div>` : ''}
-      ${memoVal      ? `<div class="rec-row"><span class="rec-lbl">📝 メモ</span><span class="rec-val">${dh(memoVal)}</span></div>` : ''}
-    </div>
-    <div class="rec-acts">
-      <button class="btn btn-ghost btn-sm" onclick="editRecord('${h(dateStr)}')">✏️ 編集</button>
-      <button class="btn btn-sm" style="background:#fff0f0;border:1px solid #ffcdd2;color:var(--danger)" onclick="deleteRecord('${h(dateStr)}')">🗑️ 削除</button>
-    </div>
-  </div>`;
-}
-
-/* ============================================================
-   概要描画（自動同期でも呼ぶ・フォームに触らない）
-   ============================================================ */
-function renderSummaryOnly() {
-  const area   = document.getElementById('summaryArea');
-  const recent = [...remoteRecords]
-    .sort((a,b) => String(b.date).localeCompare(String(a.date)))
-    .slice(0, 7);
-  if (recent.length === 0) {
-    area.innerHTML = '<div class="empty"><span class="e-icon">📊</span>記録がありません</div>';
-    return;
-  }
-  area.innerHTML = `<div class="summ-grid">${recent.map(r => `
-    <div class="summ-item">
-      <div class="summ-date">${normDate(r.date)}</div>
-      <div class="summ-sub">夜 ${r.nightPanic||0} ／ 朝 ${r.morningPanic||0}</div>
-      <div class="summ-sub">${h(r.recorder||'')} ｜ 就寝 ${h(r.sleepTime||'--')}</div>
+// ===== 概要描画 =====
+function renderSumm() {
+  const area = document.getElementById('summArea');
+  const recent = [...records].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,7);
+  if (!recent.length) { area.innerHTML='<div class="empty">📊 記録がありません</div>'; return; }
+  area.innerHTML = `<div class="sg">${recent.map(r=>`
+    <div class="si">
+      <div class="si-d">${h(r.date)}</div>
+      <div class="si-s">夜 ${r.nightPanic||0} ／ 朝 ${r.morningPanic||0}</div>
+      <div class="si-s">${h(r.recorder||'')} ｜ 就寝 ${h(r.sleepTime||'--')}</div>
     </div>`).join('')}</div>`;
 }
 
-/* ============================================================
-   薬リスト管理（設定タブ）
-   ============================================================ */
-function renderMedMgrArea() {
-  const area = document.getElementById('medMgrArea');
-  area.innerHTML = medicines.map((m, i) => `
-    <div class="med-mgr-item">
-      <span class="med-mgr-name">${h(m.name)}</span>
-      <button class="btn btn-sm" style="background:#fff0f0;border:1px solid #ffcdd2;color:var(--danger);padding:4px 9px"
-              onclick="removeMedicine(${i})">削除</button>
-    </div>`).join('') || '<p style="font-size:13px;color:var(--muted)">薬が登録されていません</p>';
+// ===== 薬管理 =====
+function renderMedMgr() {
+  document.getElementById('medMgr').innerHTML = medicines.map((m,i)=>`
+    <div class="mi-mgr">
+      <span class="mi-mgr-n">${h(m.name)}</span>
+      <button class="btn btn-sm" style="background:#fff0f0;border:1px solid #ffcdd2;color:var(--danger);padding:4px 9px" onclick="removeMed(${i})">削除</button>
+    </div>`).join('') || '<p style="font-size:13px;color:var(--muted)">薬が未登録です</p>';
 }
 
-function addMedicine() {
-  const inp  = document.getElementById('newMedName');
+function addMed() {
+  const inp = document.getElementById('newMed');
   const name = inp.value.trim();
   if (!name) return;
-  if (medicines.some(m => m.name === name)) { toast('すでに登録されています'); return; }
-  medicines.push({name, active: true});
-  inp.value = '';
-  renderMedMgrArea();
-  renderMedCheckArea();
-  toast('追加しました（「薬リストを保存」してください）');
+  if (medicines.some(m=>m.name===name)) { toast('すでに登録されています'); return; }
+  medicines.push({name,active:true}); inp.value='';
+  renderMedMgr(); renderMedArea(); toast('追加しました（「薬リストを保存」してください）');
 }
 
-function removeMedicine(i) {
-  if (!confirm('「' + medicines[i].name + '」を削除しますか？')) return;
-  medicines.splice(i, 1);
-  renderMedMgrArea();
-  renderMedCheckArea();
+function removeMed(i) {
+  if (!confirm('「'+medicines[i].name+'」を削除しますか？')) return;
+  medicines.splice(i,1); renderMedMgr(); renderMedArea();
 }
 
-async function saveMedicineList() {
+async function saveMeds() {
   try {
-    const res  = await fetch(GAS_URL, {
-      method: 'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:   JSON.stringify({action:'saveMedicines', medicines})
-    });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || '失敗');
+    await binPut({records, medicines});
     toast('💊 薬リストを保存しました');
-  } catch(e) {
-    toast('エラー: ' + e.message);
-  }
+  } catch(e) { toast('エラー: '+e.message); }
 }
 
-/* ============================================================
-   下書き保存・復元
-   ============================================================ */
+// ===== BIN ID 共有 =====
+function setBinId() {
+  const val = document.getElementById('binIdInput').value.trim();
+  if (!val) return;
+  binId = val; localStorage.setItem(BIN_ID_KEY, binId);
+  document.getElementById('currentBinId').textContent = binId;
+  toast('BIN IDを設定しました。データを読み込みます…');
+  fetchData();
+}
+
+function copyBinId() {
+  if (!binId) { toast('BIN IDがありません'); return; }
+  navigator.clipboard.writeText(binId).then(() => toast('BIN IDをコピーしました'));
+}
+
+// ===== 下書き =====
 function saveDraft() {
-  const activeMeds = medicines.filter(m => m.active !== false);
-  const medState = activeMeds.map((_, i) => ({
-    checked:  !!(document.getElementById('mc-' + i)||{}).checked,
-    timeSlot: (document.getElementById('mts-' + i)||{}).value || '',
-    how:      (document.getElementById('mhw-' + i)||{}).value || ''
+  const meds = medicines.filter(m=>m.active!==false);
+  const medState = meds.map((_,i)=>({
+    checked:!!(document.getElementById('mc'+i)||{}).checked,
+    ts:(document.getElementById('mts'+i)||{}).value||'',
+    hw:(document.getElementById('mhw'+i)||{}).value||''
   }));
-  const snapshot = {...getFormData(), medState, editingDate};
-  localStorage.setItem(DRAFT_KEY, JSON.stringify(snapshot));
+  localStorage.setItem(DRAFT_KEY, JSON.stringify({...getForm(), medState, editingDate}));
 }
 
 function restoreDraft() {
@@ -1134,125 +571,32 @@ function restoreDraft() {
     if (!raw) return;
     const d = JSON.parse(raw);
     if (!d.date) { localStorage.removeItem(DRAFT_KEY); return; }
-
-    // 今日の下書きか、または編集中のもの
-    if (!confirm('保存していない下書きがあります（' + d.date + '）。\n復元しますか？')) {
-      localStorage.removeItem(DRAFT_KEY);
-      return;
-    }
-
+    if (!confirm('下書きがあります（'+d.date+'）。復元しますか？')) { localStorage.removeItem(DRAFT_KEY); return; }
     fillForm(d);
-    if (d.medState) {
-      d.medState.forEach((st, i) => {
-        const cb = document.getElementById('mc-' + i);
-        if (!cb) return;
-        cb.checked = st.checked;
-        document.getElementById('mi-' + i).classList.toggle('on', st.checked);
-        if (st.checked) {
-          const ts = document.getElementById('mts-' + i);
-          const hw = document.getElementById('mhw-' + i);
-          if (ts) ts.value = st.timeSlot;
-          if (hw) hw.value = st.how;
-        }
-      });
-    }
-    formDirty   = true;
-    editingDate = d.editingDate || null;
-    if (editingDate) setFormStatus('✏️ ' + editingDate + ' を編集中（下書き復元）');
-  } catch(e) {
-    localStorage.removeItem(DRAFT_KEY);
-  }
+    if (d.medState) d.medState.forEach((st,i) => {
+      const cb = document.getElementById('mc'+i);
+      if (!cb) return;
+      cb.checked = st.checked;
+      document.getElementById('mi'+i).classList.toggle('on', st.checked);
+      if (st.checked) {
+        const ts = document.getElementById('mts'+i), hw = document.getElementById('mhw'+i);
+        if (ts) ts.value = st.ts; if (hw) hw.value = st.hw;
+      }
+    });
+    formDirty=true; editingDate=d.editingDate||null;
+  } catch(e) { localStorage.removeItem(DRAFT_KEY); }
 }
 
-/* ============================================================
-   ユーティリティ
-   ============================================================ */
-// 日付を YYYY-MM-DD に正規化
-// "2026-06-23T07:00:00Z" や "Tue Jun 23 2026 16:00:00 GMT+0900" にも対応
-function normDate(v) {
-  if (!v) return '';
-  const s = String(v);
-  // YYYY-MM-DD 形式がすでに含まれている
-  const m1 = s.match(/(\d{4})-(\d{2})-(\d{2})/);
-  if (m1) return m1[1] + '-' + m1[2] + '-' + m1[3];
-  // "Tue Jun 23 2026 ..." のような JS Date 文字列
-  try {
-    const d = new Date(s);
-    if (!isNaN(d.getTime())) {
-      // Asia/Tokyo で YYYY-MM-DD を取得
-      return d.toLocaleDateString('sv-SE', {timeZone: 'Asia/Tokyo'});
-    }
-  } catch(e) {}
-  return s;
-}
-
-// 就寝時間の正規化
-function normTime(v) {
-  if (!v) return '';
-  const s = String(v);
-  if (/^\d{2}:\d{2}$/.test(s)) return s;
-  const m1 = s.match(/T(\d{2}):(\d{2})/);
-  if (m1) return m1[1] + ':' + m1[2];
-  try {
-    const d = new Date(s);
-    if (!isNaN(d.getTime())) {
-      return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-    }
-  } catch(e) {}
-  const m2 = s.match(/(\d{1,2}):(\d{2})/);
-  if (m2) return m2[1].padStart(2,'0') + ':' + m2[2];
-  return '';
-}
-
-// ラジオボタン取得
-function radio(name) {
-  const el = document.querySelector('input[name="' + name + '"]:checked');
-  return el ? el.value : '';
-}
-
-// ラジオボタンセット
-function setRadio(name, value) {
-  document.querySelectorAll('input[name="' + name + '"]').forEach(el => {
-    el.checked = (el.value === value);
-  });
-}
-
-// 今日の日付 YYYY-MM-DD
-function todayStr() {
-  return new Date().toLocaleDateString('sv-SE');
-}
-
-// HH:mm
-function nowHHmm() {
-  const d = new Date();
-  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-}
-
-// フォームステータス
-function setFormStatus(msg) {
-  const el = document.getElementById('formStatus');
-  el.textContent = msg;
-  el.classList.toggle('visible', !!msg);
-}
-
-// バッジ
-function setBadge(msg) { document.getElementById('syncBadge').textContent = msg; }
-
-// HTMLエスケープ
-function h(s) {
-  return String(s||'').replace(/[&<>"']/g, c =>
-    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-// トースト
-let toastTimer;
-function toast(msg) {
-  const el = document.getElementById('toast');
-  clearTimeout(toastTimer);
-  el.textContent = msg;
-  el.classList.add('show');
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
-}
+// ===== ユーティリティ =====
+function radio(name) { const e=document.querySelector(`input[name="${name}"]:checked`); return e?e.value:''; }
+function setR(name,val) { document.querySelectorAll(`input[name="${name}"]`).forEach(e=>{e.checked=e.value===val;}); }
+function today() { return new Date().toLocaleDateString('sv-SE'); }
+function hhmm() { const d=new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function setBadge(t) { document.getElementById('badge').textContent=t; }
+function setFstat(t) { const e=document.getElementById('fstat'); e.textContent=t; e.classList.toggle('v',!!t); }
+function h(s) { return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+let tt;
+function toast(msg) { const e=document.getElementById('toast'); clearTimeout(tt); e.textContent=msg; e.classList.add('show'); tt=setTimeout(()=>e.classList.remove('show'),2600); }
 </script>
 </body>
 </html>
