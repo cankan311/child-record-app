@@ -932,7 +932,7 @@ async function deleteAllRecords() {
    ★ フォームを更新するのはここだけ（自動同期でなく、ユーザー操作）
    ============================================================ */
 function editRecord(date) {
-  const rec = remoteRecords.find(r => String(r.date) === String(date));
+  const rec = remoteRecords.find(r => normDate(r.date) === normDate(date));
   if (!rec) return;
   fillForm(rec);
   formDirty   = false;
