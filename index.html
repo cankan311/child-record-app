@@ -766,7 +766,7 @@ function getFormData() {
    ★ editRecord / resetForm / 初回のみ呼ぶ
    ============================================================ */
 function fillForm(r) {
-  document.getElementById('f-date').value     = r.date     || todayStr();
+  document.getElementById('f-date').value     = normDate(r.date) || todayStr();
   document.getElementById('f-sleepTime').value = normTime(r.sleepTime || '');
   setRadio('recorder',        r.recorder        || '母');
   setRadio('panicTimeSlot',   r.panicTimeSlot   || 'なし');
@@ -895,7 +895,7 @@ async function deleteRecord(date) {
     const res  = await fetch(GAS_URL, {
       method: 'POST',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:   JSON.stringify({action:'deleteRecord', date})
+      body:   JSON.stringify({action:'deleteRecord', date: normDate(date)})
     });
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || '削除失敗');
@@ -967,11 +967,13 @@ function buildRecordCard(r) {
       }).join('<br>')
     : 'なし';
 
+  const dateStr  = normDate(r.date);
+  const sleepStr = normTime(r.sleepTime) || '--:--';
   const dh = (v) => h(v || '');
   return `<div class="rec-card">
     <div class="rec-hdr">
-      <span class="rec-date">${dh(r.date)}</span>
-      <span class="rec-meta">${dh(r.recorder)} ｜ 就寝 ${dh(r.sleepTime)||'--:--'}</span>
+      <span class="rec-date">${h(dateStr)}</span>
+      <span class="rec-meta">${dh(r.recorder)} ｜ 就寝 ${h(sleepStr)}</span>
     </div>
     <div class="rec-body">
       <div class="rec-row"><span class="rec-lbl">💊 薬</span><span class="rec-val">${medStr}</span></div>
@@ -984,8 +986,8 @@ function buildRecordCard(r) {
       ${r.memo       ? `<div class="rec-row"><span class="rec-lbl">📝 メモ</span><span class="rec-val">${dh(r.memo)}</span></div>` : ''}
     </div>
     <div class="rec-acts">
-      <button class="btn btn-ghost btn-sm" onclick="editRecord('${h(r.date)}')">✏️ 編集</button>
-      <button class="btn btn-sm" style="background:#fff0f0;border:1px solid #ffcdd2;color:var(--danger)" onclick="deleteRecord('${h(r.date)}')">🗑️ 削除</button>
+      <button class="btn btn-ghost btn-sm" onclick="editRecord('${h(dateStr)}')">✏️ 編集</button>
+      <button class="btn btn-sm" style="background:#fff0f0;border:1px solid #ffcdd2;color:var(--danger)" onclick="deleteRecord('${h(dateStr)}')">🗑️ 削除</button>
     </div>
   </div>`;
 }
@@ -1004,7 +1006,7 @@ function renderSummaryOnly() {
   }
   area.innerHTML = `<div class="summ-grid">${recent.map(r => `
     <div class="summ-item">
-      <div class="summ-date">${h(r.date)}</div>
+      <div class="summ-date">${normDate(r.date)}</div>
       <div class="summ-sub">夜 ${r.nightPanic||0} ／ 朝 ${r.morningPanic||0}</div>
       <div class="summ-sub">${h(r.recorder||'')} ｜ 就寝 ${h(r.sleepTime||'--')}</div>
     </div>`).join('')}</div>`;
@@ -1110,6 +1112,13 @@ function restoreDraft() {
 /* ============================================================
    ユーティリティ
    ============================================================ */
+// 日付を YYYY-MM-DD に正規化
+function normDate(v) {
+  if (!v) return '';
+  const m = String(v).match(/(\d{4})-(\d{2})-(\d{2})/);
+  return m ? m[1] + '-' + m[2] + '-' + m[3] : String(v);
+}
+
 // 就寝時間の正規化
 function normTime(v) {
   if (!v) return '';
