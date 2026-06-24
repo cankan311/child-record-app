@@ -766,44 +766,65 @@ function getFormData() {
    ★ editRecord / resetForm / 初回のみ呼ぶ
    ============================================================ */
 function fillForm(r) {
-  document.getElementById('f-date').value     = normDate(r.date) || todayStr();
+  document.getElementById('f-date').value      = normDate(r.date) || todayStr();
   document.getElementById('f-sleepTime').value = normTime(r.sleepTime || '');
-  setRadio('recorder',        r.recorder        || '母');
-  setRadio('panicTimeSlot',   r.panicTimeSlot   || 'なし');
-  setRadio('stomach',         r.stomach         || 'なし');
-  setRadio('sleepy',          r.sleepy          || 'なし');
-  setRadio('meltdownChange',  r.meltdownChange  || '変わらない');
-  setRadio('sisterAggression',r.sisterAggression|| '変わらない');
+  setRadio('recorder',         r.recorder         || '母');
+  setRadio('panicTimeSlot',    r.panicTimeSlot    || 'なし');
+  setRadio('stomach',          r.stomach          || 'なし');
+  setRadio('sleepy',           r.sleepy           || 'なし');
+  setRadio('meltdownChange',   r.meltdownChange   || '変わらない');
+  setRadio('sisterAggression', r.sisterAggression || '変わらない');
 
+  // パニック値：数値以外（列ずれで文字列が入っている場合）は0にする
   const ns = document.getElementById('f-nightPanic');
   const ms = document.getElementById('f-morningPanic');
-  ns.value = r.nightPanic   || 0;
-  ms.value = r.morningPanic || 0;
+  const np = parseInt(r.nightPanic);
+  const mp = parseInt(r.morningPanic);
+  ns.value = isNaN(np) ? 0 : Math.min(np, 10);
+  ms.value = isNaN(mp) ? 0 : Math.min(mp, 10);
   document.getElementById('val-nightPanic').textContent   = ns.value;
   document.getElementById('val-morningPanic').textContent = ms.value;
 
-  document.getElementById('f-unusual').value     = r.unusual     || '';
-  document.getElementById('f-childReason').value = r.childReason || '';
-  document.getElementById('f-parentReason').value= r.parentReason|| '';
-  document.getElementById('f-memo').value        = r.memo        || '';
+  // メモ欄：updatedAt（ISO日付文字列）が混入していたら除外
+  const cleanMemo = v => (v && !/^\d{4}-\d{2}-\d{2}T/.test(String(v))) ? v : '';
+  document.getElementById('f-unusual').value      = r.unusual      || '';
+  document.getElementById('f-childReason').value  = r.childReason  || '';
+  document.getElementById('f-parentReason').value = r.parentReason || '';
+  document.getElementById('f-memo').value         = cleanMemo(r.memo);
 
-  // 薬チェック
-  const activeMeds = medicines.filter(m => m.active !== false);
-  const taken = (r.medicinesTaken || '').split(',').map(s => s.trim()).filter(Boolean);
-  const det   = (r.medicineDetails && typeof r.medicineDetails === 'object') ? r.medicineDetails : {};
+  // 薬：古い形式（medicinesTakenにJSONが丸ごと入っている）にも対応
+  let det = {}, takenNames = [];
+  if (r.medicineDetails && typeof r.medicineDetails === 'object' && Object.keys(r.medicineDetails).length > 0) {
+    det = r.medicineDetails; takenNames = Object.keys(det);
+  } else if (typeof r.medicineDetails === 'string' && r.medicineDetails.trim().startsWith('{')) {
+    try { det = JSON.parse(r.medicineDetails.trim()); takenNames = Object.keys(det); } catch(e) {}
+  }
+  if (takenNames.length === 0) {
+    const mt = (r.medicinesTaken || '').trim();
+    if (mt.startsWith('{')) {
+      try { det = JSON.parse(mt); takenNames = Object.keys(det); } catch(e) {}
+    } else {
+      takenNames = mt ? mt.split(',').map(s => s.trim()).filter(Boolean) : [];
+    }
+  }
 
-  activeMeds.forEach((med, i) => {
-    const cbEl = document.getElementById('mc-' + i);
-    if (!cbEl) return;
-    const isTaken = taken.includes(med.name);
-    cbEl.checked = isTaken;
-    document.getElementById('mi-' + i).classList.toggle('on', isTaken);
-    if (isTaken && det[med.name]) {
+  medicines.filter(m => m.active !== false).forEach((med, i) => {
+    const cb = document.getElementById('mc-' + i);
+    if (!cb) return;
+    const on = takenNames.includes(med.name);
+    cb.checked = on;
+    document.getElementById('mi-' + i).classList.toggle('on', on);
+    if (on && det[med.name]) {
       const d = det[med.name];
       const ts = document.getElementById('mts-' + i);
       const hw = document.getElementById('mhw-' + i);
       if (ts) ts.value = d.timeSlot || '';
       if (hw) hw.value = d.how      || '';
+    } else if (on) {
+      const ts = document.getElementById('mts-' + i);
+      const hw = document.getElementById('mhw-' + i);
+      if (ts) ts.value = '';
+      if (hw) hw.value = '';
     }
   });
 }
@@ -855,6 +876,7 @@ function resetForm() {
 async function saveRecord() {
   if (isSaving) return;
   const rec = getFormData();
+  rec.date = normDate(rec.date) || rec.date;
   if (!rec.date) { toast('日付を入力してください'); return; }
 
   isSaving = true;
