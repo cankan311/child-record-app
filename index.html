@@ -957,7 +957,13 @@ function renderListOnly() {
 }
 
 function buildRecordCard(r) {
-  const det    = (r.medicineDetails && typeof r.medicineDetails === 'object') ? r.medicineDetails : {};
+  // GASが文字列で返してきた場合もパースする
+  let det = {};
+  if (r.medicineDetails && typeof r.medicineDetails === 'object') {
+    det = r.medicineDetails;
+  } else if (typeof r.medicineDetails === 'string' && r.medicineDetails.startsWith('{')) {
+    try { det = JSON.parse(r.medicineDetails); } catch(e) { det = {}; }
+  }
   const taken  = (r.medicinesTaken || '').split(',').map(s => s.trim()).filter(Boolean);
   const medStr = taken.length > 0
     ? taken.map(n => {
@@ -1113,22 +1119,39 @@ function restoreDraft() {
    ユーティリティ
    ============================================================ */
 // 日付を YYYY-MM-DD に正規化
+// "2026-06-23T07:00:00Z" や "Tue Jun 23 2026 16:00:00 GMT+0900" にも対応
 function normDate(v) {
   if (!v) return '';
-  const m = String(v).match(/(\d{4})-(\d{2})-(\d{2})/);
-  return m ? m[1] + '-' + m[2] + '-' + m[3] : String(v);
+  const s = String(v);
+  // YYYY-MM-DD 形式がすでに含まれている
+  const m1 = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (m1) return m1[1] + '-' + m1[2] + '-' + m1[3];
+  // "Tue Jun 23 2026 ..." のような JS Date 文字列
+  try {
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      // Asia/Tokyo で YYYY-MM-DD を取得
+      return d.toLocaleDateString('sv-SE', {timeZone: 'Asia/Tokyo'});
+    }
+  } catch(e) {}
+  return s;
 }
 
 // 就寝時間の正規化
 function normTime(v) {
   if (!v) return '';
-  if (typeof v === 'string') {
-    if (/^\d{2}:\d{2}$/.test(v)) return v;
-    const m = v.match(/T(\d{2}):(\d{2})/);
-    if (m) return m[1] + ':' + m[2];
-    const m2 = v.match(/(\d{2}):(\d{2})(:|\s|$)/);
-    if (m2) return m2[1] + ':' + m2[2];
-  }
+  const s = String(v);
+  if (/^\d{2}:\d{2}$/.test(s)) return s;
+  const m1 = s.match(/T(\d{2}):(\d{2})/);
+  if (m1) return m1[1] + ':' + m1[2];
+  try {
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    }
+  } catch(e) {}
+  const m2 = s.match(/(\d{1,2}):(\d{2})/);
+  if (m2) return m2[1].padStart(2,'0') + ':' + m2[2];
   return '';
 }
 
