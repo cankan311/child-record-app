@@ -304,6 +304,7 @@ async function fetchData() {
     }
     setBadge('同期済 ' + hhmm());
     renderMedArea(); renderMedMgr(); renderList(); renderSumm();
+    applyLastMedDefaults();
   } catch(e) { setBadge('同期失敗'); console.warn(e); }
 }
 
@@ -330,11 +331,8 @@ function renderMedArea() {
         <label for="mc${i}" class="mi-name">${h(m.name)}</label>
       </div>
       <div class="mi-opts" id="mo${i}">
-        <div><span style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px">服用時間帯</span>
-          <select id="mts${i}">
-            <option value="">選択</option>
-            <option>朝</option><option>昼</option><option>夕方</option><option>晩</option><option>就寝前</option><option>その他</option>
-          </select></div>
+        <div><span style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px">服用時間</span>
+          <input type="time" id="mts${i}" style="width:100%;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:14px;font-family:inherit;background:#fff"></div>
         <div><span style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px">飲み方</span>
           <select id="mhw${i}">
             <option value="">選択</option>
@@ -422,6 +420,24 @@ function fillForm(r) {
   });
 }
 
+// ===== 前回の服用時間・飲み方をデフォルト適用 =====
+function applyLastMedDefaults() {
+  if (editingDate) return; // 編集中は適用しない
+  if (!records.length) return;
+  const last = [...records].sort((a,b) => b.date.localeCompare(a.date))[0];
+  if (!last) return;
+  const det = (last.medicineDetails && typeof last.medicineDetails === 'object') ? last.medicineDetails : {};
+  const meds = medicines.filter(m => m.active !== false);
+  meds.forEach((m, i) => {
+    if (det[m.name]) {
+      const ts = document.getElementById('mts'+i);
+      const hw = document.getElementById('mhw'+i);
+      if (ts && !ts.value) ts.value = det[m.name].timeSlot || '';
+      if (hw && !hw.value) hw.value = det[m.name].how || '';
+    }
+  });
+}
+
 // ===== リセット =====
 function resetForm() {
   document.getElementById('f-date').value  = today();
@@ -439,6 +455,7 @@ function resetForm() {
   formDirty=false; editingDate=null;
   localStorage.removeItem(DRAFT_KEY);
   setFstat(''); toast('↩ 入力をリセットしました');
+  applyLastMedDefaults();
 }
 
 // ===== 保存 =====
