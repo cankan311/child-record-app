@@ -957,14 +957,37 @@ function renderListOnly() {
 }
 
 function buildRecordCard(r) {
-  // GASが文字列で返してきた場合もパースする
-  let det = {};
-  if (r.medicineDetails && typeof r.medicineDetails === 'object') {
-    det = r.medicineDetails;
-  } else if (typeof r.medicineDetails === 'string' && r.medicineDetails.startsWith('{')) {
-    try { det = JSON.parse(r.medicineDetails); } catch(e) { det = {}; }
+  // ── 薬データの解析（古い形式・新しい形式両方に対応） ──
+  let det  = {};
+  let taken = [];
+
+  // medicineDetails が正しくオブジェクトで来ている場合
+  if (r.medicineDetails && typeof r.medicineDetails === 'object' && !Array.isArray(r.medicineDetails)) {
+    det   = r.medicineDetails;
+    taken = Object.keys(det);
   }
-  const taken  = (r.medicinesTaken || '').split(',').map(s => s.trim()).filter(Boolean);
+  // medicineDetails が JSON文字列で来ている場合
+  else if (typeof r.medicineDetails === 'string' && r.medicineDetails.trim().startsWith('{')) {
+    try {
+      det   = JSON.parse(r.medicineDetails.trim());
+      taken = Object.keys(det);
+    } catch(e) {}
+  }
+
+  // taken が空の場合 → medicinesTaken を使う
+  if (taken.length === 0) {
+    const mt = (r.medicinesTaken || '').trim();
+    // medicinesTaken 自体が JSON文字列の場合（古いデータ）
+    if (mt.startsWith('{')) {
+      try {
+        det   = JSON.parse(mt);
+        taken = Object.keys(det);
+      } catch(e) {}
+    } else {
+      taken = mt ? mt.split(',').map(s => s.trim()).filter(Boolean) : [];
+    }
+  }
+
   const medStr = taken.length > 0
     ? taken.map(n => {
         const d = det[n] || {};
@@ -976,6 +999,10 @@ function buildRecordCard(r) {
   const dateStr  = normDate(r.date);
   const sleepStr = normTime(r.sleepTime) || '--:--';
   const dh = (v) => h(v || '');
+
+  // メモ欄に updatedAt が混入しないようフィルタ
+  const memoVal = (r.memo && !/^\d{4}-\d{2}-\d{2}T/.test(String(r.memo))) ? r.memo : '';
+
   return `<div class="rec-card">
     <div class="rec-hdr">
       <span class="rec-date">${h(dateStr)}</span>
@@ -989,7 +1016,7 @@ function buildRecordCard(r) {
       ${r.unusual    ? `<div class="rec-row"><span class="rec-lbl">🔔 様子</span><span class="rec-val">${dh(r.unusual)}</span></div>` : ''}
       ${r.childReason? `<div class="rec-row"><span class="rec-lbl">💬 本人</span><span class="rec-val">${dh(r.childReason)}</span></div>` : ''}
       ${r.parentReason?`<div class="rec-row"><span class="rec-lbl">🤔 親の分析</span><span class="rec-val">${dh(r.parentReason)}</span></div>` : ''}
-      ${r.memo       ? `<div class="rec-row"><span class="rec-lbl">📝 メモ</span><span class="rec-val">${dh(r.memo)}</span></div>` : ''}
+      ${memoVal      ? `<div class="rec-row"><span class="rec-lbl">📝 メモ</span><span class="rec-val">${dh(memoVal)}</span></div>` : ''}
     </div>
     <div class="rec-acts">
       <button class="btn btn-ghost btn-sm" onclick="editRecord('${h(dateStr)}')">✏️ 編集</button>
